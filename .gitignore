@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Generated scanner/backtest data
+*.csv
+
+# Unrelated project
+core-banking-system/
