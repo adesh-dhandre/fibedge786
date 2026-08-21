@@ -6,7 +6,11 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-OPPORTUNITY_FILE = "FIBEDGE_BEST_OPPORTUNITIES_V3.csv"
+GITHUB_OPPORTUNITY_URL = (
+    "https://raw.githubusercontent.com/"
+    "adesh-dhandre/fibedge786/master/"
+    "FIBEDGE_BEST_OPPORTUNITIES_V3.csv"
+)
 
 GITHUB_CSV_URL = (
     "https://raw.githubusercontent.com/"
@@ -1932,10 +1936,21 @@ def home():
 
         df = load_latest_data()
 
-        if Path(OPPORTUNITY_FILE).exists():
-            opportunity_df = pd.read_csv(OPPORTUNITY_FILE)
-        else:
-            opportunity_df = pd.DataFrame()
+        opportunity_response = requests.get(
+            GITHUB_OPPORTUNITY_URL,
+            timeout=15,
+            headers={
+                "Cache-Control": "no-cache"
+            }
+        )
+
+        opportunity_response.raise_for_status()
+
+        opportunity_df = pd.read_csv(
+            io.StringIO(
+                opportunity_response.text
+            )
+        )
 
     except Exception as error:
 
