@@ -7,7 +7,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 DATA_FILE = "FIBEDGE_LATEST_SIGNALS.csv"
-REFRESH_SCRIPT = "fib_price_refresh.py"
+REFRESH_SCRIPT = "fib_price_refresh_v2.py"
 
 
 HTML = """
