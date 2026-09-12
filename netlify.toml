@@ -1,0 +1,10 @@
+[build]
+  publish = "netlify_site"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF netlify_site/ netlify.toml"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
