@@ -2,6 +2,9 @@
   publish = "netlify_site"
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF netlify_site/ netlify.toml"
 
+[build.environment]
+  PYTHON_VERSION = "3.11"
+
 [[headers]]
   for = "/*"
   [headers.values]
