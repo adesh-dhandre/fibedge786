@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06101d"/>
+      <stop offset="55%" stop-color="#0a1726"/>
+      <stop offset="100%" stop-color="#09131f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="25%" cy="20%" r="65%">
+      <stop offset="0%" stop-color="#2cdd89" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#2cdd89" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="18" flood-color="#000000" flood-opacity="0.35"/></filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <g opacity="0.12" stroke="#8fa5bb" stroke-width="1">
+    <path d="M0 95H1200M0 190H1200M0 285H1200M0 380H1200M0 475H1200M0 570H1200"/>
+    <path d="M120 0V630M240 0V630M360 0V630M480 0V630M600 0V630M720 0V630M840 0V630M960 0V630M1080 0V630"/>
+  </g>
+  <g transform="translate(90 125)" filter="url(#shadow)">
+    <rect x="0" y="0" width="1020" height="380" rx="30" fill="#0b1929" stroke="#24445f" stroke-width="2"/>
+    <rect x="0" y="0" width="8" height="380" rx="4" fill="#2cdd89"/>
+    <text x="58" y="105" fill="#eef5fd" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="800">FibEdge <tspan fill="#2cdd89">786</tspan></text>
+    <text x="60" y="162" fill="#8fa5bb" font-family="Arial, Helvetica, sans-serif" font-size="24">NSE Fibonacci Signal Dashboard</text>
+    <line x1="60" y1="205" x2="960" y2="205" stroke="#24445f"/>
+    <g font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700">
+      <rect x="60" y="245" width="150" height="52" rx="26" fill="#103426" stroke="#2cdd89"/>
+      <text x="135" y="278" text-anchor="middle" fill="#72efb5">ALL</text>
+      <rect x="230" y="245" width="170" height="52" rx="26" fill="#102a4d" stroke="#3f8cff"/>
+      <text x="315" y="278" text-anchor="middle" fill="#8dbdff">NIFTY 50</text>
+      <rect x="420" y="245" width="150" height="52" rx="26" fill="#2d174c" stroke="#a56cff"/>
+      <text x="495" y="278" text-anchor="middle" fill="#c7a4ff">F&amp;O</text>
+      <rect x="590" y="245" width="180" height="52" rx="26" fill="#4a2a0f" stroke="#f2a340"/>
+      <text x="680" y="278" text-anchor="middle" fill="#ffc879">SMALLCAP</text>
+      <rect x="790" y="245" width="190" height="52" rx="26" fill="#4a1730" stroke="#ff5f91"/>
+      <text x="885" y="278" text-anchor="middle" fill="#ff9cbb">MICROCAP</text>
+    </g>
+    <text x="60" y="345" fill="#6f849b" font-family="Arial, Helvetica, sans-serif" font-size="20">Meaningful swings • 0.786 entry • historical quality • live opportunity</text>
+  </g>
+</svg>
