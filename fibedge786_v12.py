@@ -11,10 +11,307 @@ FILTERS=[('ALL','All'),('NIFTY50','NIFTY 50'),('FNO','F&O'),('SMALLCAP250','Smal
 H={'User-Agent':'Mozilla/5.0','Cache-Control':'no-cache'}
 
 HTML='''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FibEdge 786</title><style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;background:linear-gradient(180deg,#06101d,#050c15);color:#eef5fd}.nav{position:sticky;top:0;z-index:99;background:#07111eee;border-bottom:1px solid #183049}.navin,.page{max-width:1450px;margin:auto}.navin{padding:13px 20px;display:flex;justify-content:space-between;align-items:center}.brand{font-weight:900;font-size:20px}.brand b{color:#25dc83}.page{padding:24px 20px 55px}h1{margin:0;font-size:clamp(28px,4vw,46px)}.sub{color:#7f95ad;font-size:12px;margin:8px 0 14px}.hero-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.strategy{display:inline-flex;gap:8px;flex-wrap:wrap;background:#0c1a2a;border:1px solid #1f3851;border-radius:11px;padding:9px 11px;color:#9bb0c6;font-size:10px}.scan-btn{display:inline-flex;align-items:center;gap:7px;text-decoration:none;background:linear-gradient(135deg,#26df86,#12b96b);color:#04130b;border:1px solid #35ed95;border-radius:11px;padding:9px 13px;font-size:10px;font-weight:900;box-shadow:0 8px 25px rgba(37,220,131,.12)}.scan-btn:hover{filter:brightness(1.06)}.fresh{margin-top:18px;padding:12px 14px;border:1px solid #1d5c45;border-radius:12px;background:#0c211b80;font-size:11px;color:#8fa5bb}.fresh b{color:#27db84}.filters{position:sticky;top:62px;z-index:90;margin:16px 0 20px;padding:9px;border:1px solid #1e3852;border-radius:14px;background:#07111ef2}.chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chip{white-space:nowrap;text-decoration:none;color:#91a7bd;background:#0c1c2d;border:1px solid #284159;padding:8px 12px;border-radius:999px;font-size:10px;font-weight:800}.chip.on{color:#04130b;background:#2cdd89;border-color:#2cdd89}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}.stat{background:#0b1929;border:1px solid #1b324a;border-radius:14px;padding:15px}.lab{font-size:8px;color:#6c8198;text-transform:uppercase}.num{font-size:25px;font-weight:900;margin-top:5px}.g{color:#27dc84}.y{color:#f1c45c}.b{color:#62a8ff}.search{display:flex;gap:8px;background:#091725;border:1px solid #1b3148;border-radius:13px;padding:11px;margin-bottom:27px}.search input{flex:1;background:#06111d;border:1px solid #263d55;color:white;border-radius:9px;padding:11px}.search button,.load{border:0;border-radius:9px;background:#1a3047;color:#eef4fa;padding:10px 15px;font-weight:800;text-decoration:none;font-size:10px}.section{margin-bottom:32px}.head{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px;gap:10px}.title{font-size:19px;font-weight:900}.desc{color:#6f849b;font-size:10px;margin-top:3px}.count{font-size:9px;color:#9db0c5;border:1px solid #294159;border-radius:999px;padding:5px 8px}.quality{padding:16px;border:1px solid #29465f;border-radius:16px;background:#0a1929;margin-bottom:33px}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 17px}.sum{background:#081624;border:1px solid #203950;border-radius:10px;padding:11px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.card{background:#0b1a2b;border:1px solid #1d354d;border-radius:14px;overflow:hidden}.ctop{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:12px 13px;border-bottom:1px solid #193149}.sym{font-weight:900;font-size:16px}.badge{font-size:8px;font-weight:900;border-radius:999px;padding:5px 7px;background:#163047;color:#9eb2c8}.open{color:#27dc84;background:#123528}.near{color:#f1c45c;background:#392f16}.body{padding:13px}.price{font-size:23px;font-weight:900}.muted{font-size:9px;color:#687e96}.levels,.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}.box{background:#091a2b;border-radius:8px;padding:8px}.box b{display:block;font-size:11px;margin-top:3px}table{width:100%;border-collapse:collapse;background:#091725;border:1px solid #1b324a;border-radius:13px;overflow:hidden}th,td{padding:11px;text-align:left;border-bottom:1px solid #152a3f;font-size:10px}th{font-size:8px;color:#6d829a;text-transform:uppercase;background:#0c1b2b}.empty{text-align:center;padding:22px;border:1px dashed #294159;border-radius:12px;color:#70859d;font-size:11px}.loadw{text-align:center;margin-top:14px}.foot{text-align:center;border-top:1px solid #172a3e;padding-top:22px;margin-top:40px;color:#587087;font-size:9px;line-height:1.7}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial;background:linear-gradient(180deg,#06101d,#050c15);color:#eef5fd}.nav{position:sticky;top:0;z-index:99;background:#07111eee;border-bottom:1px solid #183049}.navin,.page{max-width:1450px;margin:auto}.navin{padding:13px 20px;display:flex;justify-content:space-between;align-items:center}.brand{font-weight:900;font-size:20px}.brand b{color:#25dc83}.page{padding:24px 20px 55px}h1{margin:0;font-size:clamp(28px,4vw,46px)}.sub{color:#7f95ad;font-size:12px;margin:8px 0 14px}.hero-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.strategy{display:inline-flex;gap:8px;flex-wrap:wrap;background:#0c1a2a;border:1px solid #1f3851;border-radius:11px;padding:9px 11px;color:#9bb0c6;font-size:10px}.scan-btn{display:inline-flex;align-items:center;gap:7px;text-decoration:none;background:linear-gradient(135deg,#26df86,#12b96b);color:#04130b;border:1px solid #35ed95;border-radius:11px;padding:9px 13px;font-size:10px;font-weight:900;box-shadow:0 8px 25px rgba(37,220,131,.12)}.scan-btn:hover{filter:brightness(1.06)}.fresh{margin-top:18px;padding:12px 14px;border:1px solid #1d5c45;border-radius:12px;background:#0c211b80;font-size:11px;color:#8fa5bb}.fresh b{color:#27db84}.filters{position:sticky;top:62px;z-index:90;margin:16px 0 20px;padding:9px;border:1px solid #1e3852;border-radius:14px;background:#07111ef2}.chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chip{white-space:nowrap;text-decoration:none;color:#91a7bd;background:#0c1c2d;border:1px solid #284159;padding:8px 12px;border-radius:999px;font-size:10px;font-weight:800}.chip.on{color:#04130b;font-weight:900}
+
+/* Universe colors */
+.u-all{border-color:#236b4b;color:#65dda3}
+.u-all.on{
+ background:#2cdd89;
+ border-color:#2cdd89;
+ color:#04130b;
+ box-shadow:0 0 18px rgba(44,221,137,.28)
+}
+
+.u-nifty50{border-color:#285b91;color:#74b9ff}
+.u-nifty50.on{
+ background:#3498ff;
+ border-color:#3498ff;
+ color:#03101c;
+ box-shadow:0 0 18px rgba(52,152,255,.30)
+}
+
+.u-fno{border-color:#64408f;color:#c28aff}
+.u-fno.on{
+ background:#a967ff;
+ border-color:#a967ff;
+ color:#13051f;
+ box-shadow:0 0 18px rgba(169,103,255,.30)
+}
+
+.u-smallcap250{border-color:#8b5b25;color:#ffb963}
+.u-smallcap250.on{
+ background:#f39a3c;
+ border-color:#f39a3c;
+ color:#1b0c02;
+ box-shadow:0 0 18px rgba(243,154,60,.30)
+}
+
+.u-microcap250{border-color:#913a59;color:#ff7fa9}
+.u-microcap250.on{
+ background:#ff5f91;
+ border-color:#ff5f91;
+ color:#210510;
+ box-shadow:0 0 18px rgba(255,95,145,.30)
+}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}.stat{background:#0b1929;border:1px solid #1b324a;border-radius:14px;padding:15px}.lab{font-size:8px;color:#6c8198;text-transform:uppercase}.num{font-size:25px;font-weight:900;margin-top:5px}.g{color:#27dc84}.y{color:#f1c45c}.b{color:#62a8ff}.search{display:flex;gap:8px;background:#091725;border:1px solid #1b3148;border-radius:13px;padding:11px;margin-bottom:27px}.search input{flex:1;background:#06111d;border:1px solid #263d55;color:white;border-radius:9px;padding:11px}.search button,.load{border:0;border-radius:9px;background:#1a3047;color:#eef4fa;padding:10px 15px;font-weight:800;text-decoration:none;font-size:10px}.section{margin-bottom:32px}.head{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px;gap:10px}.title{font-size:19px;font-weight:900}.desc{color:#6f849b;font-size:10px;margin-top:3px}.count{font-size:9px;color:#9db0c5;border:1px solid #294159;border-radius:999px;padding:5px 8px}.quality{padding:16px;border:1px solid #29465f;border-radius:16px;background:#0a1929;margin-bottom:33px}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 17px}.sum{background:#081624;border:1px solid #203950;border-radius:10px;padding:11px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.card{background:#0b1a2b;border:1px solid #1d354d;border-radius:14px;overflow:hidden}.ctop{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:12px 13px;border-bottom:1px solid #193149}.sym{font-weight:900;font-size:16px}.badge{font-size:8px;font-weight:900;border-radius:999px;padding:5px 7px;background:#163047;color:#9eb2c8}.open{color:#27dc84;background:#123528}.near{color:#f1c45c;background:#392f16}.body{padding:13px}.price{font-size:23px;font-weight:900}.muted{font-size:9px;color:#687e96}.levels,.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}.box{background:#091a2b;border-radius:8px;padding:8px}.box b{display:block;font-size:11px;margin-top:3px}table{width:100%;border-collapse:collapse;background:#091725;border:1px solid #1b324a;border-radius:13px;overflow:hidden}th,td{padding:11px;text-align:left;border-bottom:1px solid #152a3f;font-size:10px}th{font-size:8px;color:#6d829a;text-transform:uppercase;background:#0c1b2b}.empty{text-align:center;padding:22px;border:1px dashed #294159;border-radius:12px;color:#70859d;font-size:11px}.loadw{text-align:center;margin-top:14px}.foot{text-align:center;border-top:1px solid #172a3e;padding-top:22px;margin-top:40px;color:#587087;font-size:9px;line-height:1.7}
 @media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:700px){.navin{padding:11px 12px}.page{padding:17px 11px 36px}.filters{top:55px}.grid{grid-template-columns:1fr}.stats{gap:7px}.stat{padding:12px}.num{font-size:22px}.summary{grid-template-columns:1fr}.search{flex-direction:column}.hero-actions{align-items:stretch}.strategy,.scan-btn{width:100%;justify-content:center}.levels{grid-template-columns:repeat(3,1fr)}table,thead,tbody,tr,th,td{display:block;width:100%}thead{display:none}tbody{display:grid;gap:9px}tr{display:grid;grid-template-columns:1fr 1fr;border:1px solid #1d354d;border-radius:12px;overflow:hidden;background:#0b1a2b}td{padding:9px 10px}td:before{content:attr(data-l);display:block;color:#647a91;font-size:7px;text-transform:uppercase;margin-bottom:2px}td:first-child{grid-column:1/-1;background:#0c1b2b;font-size:13px}.load{display:block;width:100%}}
-</style></head><body><div class="nav"><div class="navin"><div class="brand">FibEdge <b>786</b></div><div class="muted">Auto-updated NSE Dashboard</div></div></div><div class="page"><h1>NSE Fibonacci Signal Dashboard</h1><div class="sub">Meaningful-swing signals with historical quality kept separate from current opportunity.</div><div class="hero-actions"><div class="strategy">8%+ decline • 15+ days • Entry 0.786 • SL 0.500 • Target 1.260</div><a class="scan-btn" href="{{manual_scan_url}}" target="_blank" rel="noopener">↻ Manual Scan</a></div><div class="fresh">Latest timestamp: <b>{{latest}}</b></div><div class="filters"><div class="chips">{% for k,l in filters %}<a class="chip {% if sel==k %}on{% endif %}" href="/?universe={{k}}">{{l}}</a>{% endfor %}</div></div><div class="stats"><div class="stat"><div class="lab">Stocks Scanned</div><div class="num">{{total}}</div></div><div class="stat"><div class="lab">Open Signals</div><div class="num g">{{open_n}}</div></div><div class="stat"><div class="lab">Near 0.786</div><div class="num y">{{near_n}}</div></div><div class="stat"><div class="lab">Waiting</div><div class="num b">{{wait_n}}</div></div></div><form class="search"><input type="hidden" name="universe" value="{{sel}}"><input name="q" value="{{q}}" placeholder="Search stock symbol..."><button>Search</button></form>
+
+/* ===== PROFESSIONAL UNIVERSE THEMES ===== */
+body{
+ --accent:#2cdd89;
+ --accent-soft:rgba(44,221,137,.12);
+ --accent-border:rgba(44,221,137,.42);
+ --accent-glow:rgba(44,221,137,.18);
+ --accent-text:#7df0b8;
+ --accent-deep:#0f3a2b;
+}
+
+body.theme-nifty50{
+ --accent:#3f8cff;
+ --accent-soft:rgba(63,140,255,.12);
+ --accent-border:rgba(63,140,255,.42);
+ --accent-glow:rgba(63,140,255,.20);
+ --accent-text:#8dbdff;
+ --accent-deep:#102a4d;
+}
+
+body.theme-fno{
+ --accent:#a56cff;
+ --accent-soft:rgba(165,108,255,.12);
+ --accent-border:rgba(165,108,255,.42);
+ --accent-glow:rgba(165,108,255,.20);
+ --accent-text:#c7a4ff;
+ --accent-deep:#2d174c;
+}
+
+body.theme-smallcap250{
+ --accent:#f2a340;
+ --accent-soft:rgba(242,163,64,.12);
+ --accent-border:rgba(242,163,64,.42);
+ --accent-glow:rgba(242,163,64,.20);
+ --accent-text:#ffc879;
+ --accent-deep:#4a2a0f;
+}
+
+body.theme-microcap250{
+ --accent:#ff5f91;
+ --accent-soft:rgba(255,95,145,.12);
+ --accent-border:rgba(255,95,145,.42);
+ --accent-glow:rgba(255,95,145,.20);
+ --accent-text:#ff9cbb;
+ --accent-deep:#4a1730;
+}
+
+/* subtle Grand Line-style atmosphere */
+body{
+ background:
+ radial-gradient(circle at 14% 8%, var(--accent-soft), transparent 24%),
+ radial-gradient(circle at 88% 18%, rgba(255,255,255,.025), transparent 18%),
+ linear-gradient(180deg,#06101d 0%,#050c15 48%,#040910 100%);
+}
+
+body:before{
+ content:"";
+ position:fixed;
+ inset:0;
+ pointer-events:none;
+ z-index:-1;
+ opacity:.18;
+ background-image:
+  linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.014) 1px,transparent 1px);
+ background-size:40px 40px;
+ mask-image:linear-gradient(to bottom,black,transparent 72%);
+}
+
+.nav{
+ border-bottom-color:var(--accent-border);
+ box-shadow:0 8px 30px rgba(0,0,0,.24);
+}
+
+.brand b{
+ color:var(--accent);
+ text-shadow:0 0 16px var(--accent-glow);
+}
+
+h1{
+ letter-spacing:-.02em;
+}
+
+.strategy{
+ border-color:var(--accent-border);
+ background:
+  linear-gradient(180deg,var(--accent-soft),rgba(12,26,42,.92));
+}
+
+.fresh{
+ border-color:var(--accent-border);
+ background:linear-gradient(180deg,var(--accent-soft),rgba(8,24,22,.48));
+}
+
+.fresh b{
+ color:var(--accent-text);
+}
+
+.filters{
+ border-color:var(--accent-border);
+ box-shadow:0 8px 26px rgba(0,0,0,.18);
+}
+
+.chip{
+ transition:.18s ease;
+}
+
+.chip:hover{
+ transform:translateY(-1px);
+ border-color:var(--accent-border);
+}
+
+.stat{
+ position:relative;
+ overflow:hidden;
+}
+
+.stat:after{
+ content:"";
+ position:absolute;
+ left:0;
+ right:0;
+ bottom:0;
+ height:2px;
+ background:linear-gradient(90deg,transparent,var(--accent),transparent);
+ opacity:.65;
+}
+
+.stat:hover{
+ border-color:var(--accent-border);
+ box-shadow:0 10px 28px var(--accent-soft);
+}
+
+.quality,
+.card,
+table{
+ box-shadow:0 8px 26px rgba(0,0,0,.16);
+}
+
+.quality{
+ border-color:var(--accent-border);
+ background:
+  linear-gradient(180deg,var(--accent-soft),rgba(10,25,41,.94));
+}
+
+.quality .title{
+ color:var(--accent-text);
+}
+
+.section{
+ position:relative;
+}
+
+.section:before{
+ content:"";
+ position:absolute;
+ left:0;
+ top:0;
+ width:3px;
+ height:28px;
+ border-radius:4px;
+ background:var(--accent);
+ box-shadow:0 0 14px var(--accent-glow);
+}
+
+.section .head{
+ padding-left:10px;
+}
+
+.title{
+ letter-spacing:-.01em;
+}
+
+.card{
+ transition:.18s ease;
+}
+
+.card:hover{
+ transform:translateY(-2px);
+ border-color:var(--accent-border);
+ box-shadow:0 12px 34px var(--accent-soft);
+}
+
+.ctop{
+ background:
+ linear-gradient(90deg,var(--accent-soft),transparent 60%);
+}
+
+.price{
+ color:#f7fbff;
+}
+
+table{
+ border-color:var(--accent-border);
+}
+
+th{
+ background:
+ linear-gradient(180deg,var(--accent-soft),#0c1b2b);
+}
+
+tr:hover td{
+ background:var(--accent-soft);
+}
+
+.search{
+ border-color:var(--accent-border);
+}
+
+.search input:focus{
+ outline:none;
+ border-color:var(--accent);
+ box-shadow:0 0 0 3px var(--accent-soft);
+}
+
+.search button,
+.load{
+ background:
+ linear-gradient(135deg,var(--accent-deep),var(--accent));
+ color:#f7fbff;
+ border:1px solid var(--accent-border);
+}
+
+.load:hover,
+.search button:hover{
+ box-shadow:0 8px 22px var(--accent-glow);
+}
+
+.count{
+ border-color:var(--accent-border);
+ color:var(--accent-text);
+}
+
+.sum{
+ border-color:var(--accent-border);
+}
+
+.foot{
+ border-top-color:var(--accent-border);
+}
+
+/* active chip uses selected universe accent */
+.chip.on{
+ background:var(--accent);
+ border-color:var(--accent);
+ color:#06101d;
+ box-shadow:0 0 20px var(--accent-glow);
+}
+
+/* retain identity colors for inactive universe chips */
+.u-all{border-color:#236b4b;color:#65dda3}
+.u-nifty50{border-color:#285b91;color:#74b9ff}
+.u-fno{border-color:#64408f;color:#c28aff}
+.u-smallcap250{border-color:#8b5b25;color:#ffb963}
+.u-microcap250{border-color:#913a59;color:#ff7fa9}
+
+</style></head><body class="theme-{{sel|lower}}"><div class="nav"><div class="navin"><div class="brand">FibEdge <b>786</b></div><div class="muted">Auto-updated NSE Dashboard</div></div></div><div class="page"><h1>NSE Fibonacci Signal Dashboard</h1><div class="sub">Meaningful-swing signals with historical quality kept separate from current opportunity.</div><div class="hero-actions"><div class="strategy">8%+ decline • 15+ days • Entry 0.786 • SL 0.500 • Target 1.260</div><a class="scan-btn" href="{{manual_scan_url}}" target="_blank" rel="noopener">↻ Manual Scan</a></div><div class="fresh">Latest timestamp: <b>{{latest}}</b></div><div class="filters"><div class="chips">{% for k,l in filters %}<a class="chip u-{{k|lower}} {% if sel==k %}on{% endif %}" href="/?universe={{k}}">{{l}}</a>{% endfor %}</div></div><div class="stats"><div class="stat"><div class="lab">Stocks Scanned</div><div class="num">{{total}}</div></div><div class="stat"><div class="lab">Open Signals</div><div class="num g">{{open_n}}</div></div><div class="stat"><div class="lab">Near 0.786</div><div class="num y">{{near_n}}</div></div><div class="stat"><div class="lab">Waiting</div><div class="num b">{{wait_n}}</div></div></div><form class="search"><input type="hidden" name="universe" value="{{sel}}"><input name="q" value="{{q}}" placeholder="Search stock symbol..."><button>Search</button></form>
 {% if q %}<div class="section"><div class="head"><div><div class="title">Search Results</div><div class="desc">{{q}}</div></div><div class="count">{{search_rows|length}}</div></div>{{ table(search_rows,'search')|safe }}</div>{% endif %}
 <div class="quality" id="quality"><div class="title">🔥 Best Setups Now</div><div class="desc">5-year quality combined with current 0.786 position.</div><div class="summary"><div class="sum"><div class="lab">Strong Now</div><div class="num g">{{strong|length}}</div></div><div class="sum"><div class="lab">Good Setups</div><div class="num b">{{good_n}}</div></div><div class="sum"><div class="lab">Quality Watch</div><div class="num y">{{qwatch}}</div></div></div>{% if strong %}<div class="grid">{% for r in strong %}<div class="card"><div class="ctop"><div class="sym">{{r.Symbol}}</div><div class="badge open">STRONG NOW • {{r.Grade}} • {{r.Speed}}</div></div><div class="body"><div class="muted">Current Price</div><div class="price">₹{{r.Price}}</div><div class="muted">{{r.State}}</div><div class="metrics"><div class="box"><span class="lab">Entry</span><b>{{r.Entry}}</b></div><div class="box"><span class="lab">Win Rate</span><b>{{r.Win}}</b></div><div class="box"><span class="lab">Expectancy</span><b>{{r.Exp}}</b></div></div></div></div>{% endfor %}</div>{% else %}<div class="empty">No Strong Now setups.</div>{% endif %}</div>
 <div class="section" id="open"><div class="head"><div><div class="title">Open Signals</div><div class="desc">Entry has already triggered.</div></div><div class="count">{{open_rows|length}}</div></div>{{ cards(open_rows,'OPEN')|safe }}{% if open_rows|length>ol %}<div class="loadw"><a class="load" href="/?universe={{sel}}&open_limit={{ol+24}}&watch_limit={{wl}}&quality_limit={{ql}}#open">Load More Open Signals</a></div>{% endif %}</div>
@@ -28,8 +325,14 @@ def load(url): return pd.read_csv(io.StringIO(get(url)))
 def norm(s): return s.astype(str).str.replace('.NS','',regex=False).str.strip().str.upper()
 def mapping():
  try:
-  m=load(MAP);m['SYMBOL']=m['SYMBOL'].astype(str).str.upper().str.strip();return m
- except: return pd.DataFrame()
+  try:
+   m=pd.read_csv('STOCK_UNIVERSE_MAPPING.csv')
+  except:
+   m=load(MAP)
+  m['SYMBOL']=m['SYMBOL'].astype(str).str.upper().str.strip()
+  return m
+ except:
+  return pd.DataFrame()
 def filt(df,key,m):
  if key=='ALL' or m.empty or df.empty:return df.copy()
  sy=set(m.loc[m[key].astype(str).str.upper().eq('YES'),'SYMBOL']);return df[norm(df['Symbol']).isin(sy)].copy()
