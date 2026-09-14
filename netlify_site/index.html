@@ -51,7 +51,7 @@ button,input{font:inherit}
 </main>
 <script>
 const BASE='https://raw.githubusercontent.com/adesh-dhandre/fibedge786/master/';
-const URLS={signals:BASE+'FIBEDGE_LATEST_SIGNALS.csv',opp:BASE+'FIBEDGE_BEST_OPPORTUNITIES_V3.csv',map:BASE+'STOCK_UNIVERSE_MAPPING.csv'};
+const URLS={signals:BASE+'FIBEDGE_LATEST_SIGNALS.csv',opp:BASE+'FIBEDGE_BEST_OPPORTUNITIES_V3.csv',map:'./STOCK_UNIVERSE_MAPPING.csv'};
 const FILTERS=[{key:'ALL',label:'All',cls:'u-all'},{key:'NIFTY50',label:'NIFTY 50',cls:'u-nifty50'},{key:'FNO',label:'F&O',cls:'u-fno'},{key:'SMALLCAP250',label:'Smallcap 250',cls:'u-smallcap250'},{key:'MICROCAP250',label:'Microcap 250',cls:'u-microcap250'}];
 let DATA={signals:[],opp:[],map:[]},selected='ALL',openLimit=24,watchLimit=100,qualityLimit=20;
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
