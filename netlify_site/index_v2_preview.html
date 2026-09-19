@@ -167,7 +167,15 @@ h1{font-size:clamp(34px,5vw,58px);letter-spacing:-.05em;line-height:.98;margin:9
   padding:11px 16px;background:linear-gradient(135deg,rgba(var(--accent-rgb),.35),rgba(var(--accent-rgb),.12));
   color:var(--accent2);font-weight:900;font-size:11px;cursor:pointer
 }
-.section{margin:0 0 34px}
+.section{margin:0 0 34px;padding:16px;border-radius:18px;background:#0a1724;border:1px solid #1f3449;box-shadow:0 12px 34px rgba(0,0,0,.12);transition:.2s ease}
+.section:hover{transform:translateY(-1px)}
+.section-best{background:linear-gradient(180deg,rgba(34,197,94,.08),#0a1724 46%);border-color:rgba(34,197,94,.30);border-top:3px solid #22c55e}
+.section-open{background:linear-gradient(180deg,rgba(20,184,166,.08),#0a1724 46%);border-color:rgba(20,184,166,.30);border-top:3px solid #14b8a6}
+.section-near{background:linear-gradient(180deg,rgba(245,158,11,.085),#0a1724 46%);border-color:rgba(245,158,11,.30);border-top:3px solid #f59e0b}
+.section-watch{background:linear-gradient(180deg,rgba(139,92,246,.08),#0a1724 46%);border-color:rgba(139,92,246,.30);border-top:3px solid #8b5cf6}
+.section-history{background:linear-gradient(180deg,rgba(56,189,248,.08),#0a1724 46%);border-color:rgba(56,189,248,.30);border-top:3px solid #38bdf8}
+.section-best .title{color:#4ade80}.section-open .title{color:#2dd4bf}.section-near .title{color:#fbbf24}.section-watch .title{color:#a78bfa}.section-history .title{color:#67e8f9}
+.section-best .titlewrap{border-left-color:#22c55e}.section-open .titlewrap{border-left-color:#14b8a6}.section-near .titlewrap{border-left-color:#f59e0b}.section-watch .titlewrap{border-left-color:#8b5cf6}.section-history .titlewrap{border-left-color:#38bdf8}
 .head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:13px}
 .titlewrap{padding-left:12px;border-left:3px solid var(--accent)}
 .title{font-size:22px;font-weight:950;letter-spacing:-.025em}
@@ -283,7 +291,7 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
       <div id="searchRows"></div>
     </div>
 
-    <div class="quality">
+    <div class="quality section-best">
       <div class="titlewrap"><div class="title">Best Setups Now</div><div class="desc">Historical quality combined with current 0.786 position.</div></div>
       <div class="summary">
         <div class="sum"><div class="lab">Strong Now</div><div class="num g" id="strongN">0</div></div>
@@ -293,22 +301,22 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
       <div id="strongRows"></div>
     </div>
 
-    <div class="section" id="open">
+    <div class="section section-open" id="open">
       <div class="head"><div class="titlewrap"><div class="title">Open Signals</div><div class="desc">Entry has already triggered.</div></div><div class="count" id="openCount">0</div></div>
       <div id="openRows"></div><div class="loadw" id="openLoad"></div>
     </div>
 
-    <div class="section" id="near">
+    <div class="section section-near" id="near">
       <div class="head"><div class="titlewrap"><div class="title">Near 0.786</div><div class="desc">Highest-priority upcoming setups.</div></div><div class="count" id="nearCount">0</div></div>
       <div id="nearRows"></div>
     </div>
 
-    <div class="section" id="watch">
+    <div class="section section-watch" id="watch">
       <div class="head"><div class="titlewrap"><div class="title">Watchlist</div><div class="desc">Waiting setups within 10% of 0.786.</div></div><div class="count" id="watchCount">0</div></div>
       <div id="watchRows"></div><div class="loadw" id="watchLoad"></div>
     </div>
 
-    <div class="section" id="hist">
+    <div class="section section-history" id="hist">
       <div class="head"><div class="titlewrap"><div class="title">Good Historical Setups</div><div class="desc">Positive historical setups ranked by quality and speed.</div></div><div class="count" id="goodCount">0</div></div>
       <div id="goodRows"></div><div class="loadw" id="goodLoad"></div>
     </div>
@@ -382,8 +390,8 @@ function previewCards(rows,premium){
     return '<div class="pcard" style="animation-delay:'+(i*35)+'ms"><div class="pcardhead"><div class="pcardsym">'+esc(sym(r.Symbol))+'</div><div class="pcardbadge">'+badge+' · '+esc(status)+'</div></div><div class="pprice">₹'+esc(num(r.Price))+'</div><div class="pmeta">'+esc(r['Price Time']||'-')+'</div><div class="pmetrics"><div class="pmetric"><span>Entry</span><b>'+esc(num(r.Entry))+'</b></div><div class="pmetric"><span>Target</span><b>'+esc(num(r.Target))+'</b></div><div class="pmetric"><span>Stop</span><b>'+esc(num(r.SL))+'</b></div><div class="pmetric"><span>Decline</span><b>'+esc(r._decline?r._decline.toFixed(1)+'%':'—')+'</b></div><div class="pmetric"><span>Swing</span><b>'+esc(r._swing?r._swing+'d':'—')+'</b></div><div class="pmetric"><span>Distance</span><b>'+esc(pct(r['Distance %']))+'</b></div></div></div>';
   }).join('')+'</div>';
 }
-function previewSection(title,desc,count,html){
-  return '<div class="section"><div class="head"><div class="titlewrap"><div class="title">'+esc(title)+'</div><div class="desc">'+esc(desc)+'</div></div><div class="count">'+count+'</div></div>'+html+'</div>';
+function previewSection(title,desc,count,html,cls){
+  return '<div class="section '+(cls||'')+'"><div class="head"><div class="titlewrap"><div class="title">'+esc(title)+'</div><div class="desc">'+esc(desc)+'</div></div><div class="count">'+count+'</div></div>'+html+'</div>';
 }
 function renderModeView(){
   const classic=document.getElementById('classicArea'),pending=document.getElementById('modePending');
@@ -431,11 +439,11 @@ function renderModeView(){
       '<div class="pstat"><div class="lab">Near 0.786</div><b>'+nearRows.length+'</b></div>'+
       '<div class="pstat"><div class="lab">Universe</div><b style="font-size:14px;margin-top:10px">'+esc(uni.toUpperCase())+'</b></div>'+
     '</div>'+
-    previewSection('Best Setups Now',premium?'Highest-ranked Premium-style candidates for manual chart review.':'Closest/highest-priority Clean Swing candidates.',bestRows.length,previewCards(bestRows,premium))+
-    previewSection('Open Signals','Entry has already triggered.',openRows.length,previewCards(openRows,premium))+
-    previewSection('Near 0.786','Highest-priority setups approaching the 0.786 zone.',nearRows.length,previewCards(nearRows,premium))+
-    previewSection('Watchlist','Developing setups within 10% of the 0.786 level.',watchRows.length,table(watchRows.slice(0,100).map(signalRow),'watch'))+
-    previewSection('Good Historical Setups','Historical-quality names kept separate from the current opportunity.',hist.length,table(hist.map(qualityRow),'quality'));
+    previewSection('Best Setups Now',premium?'Highest-ranked Premium-style candidates for manual chart review.':'Closest/highest-priority Clean Swing candidates.',bestRows.length,previewCards(bestRows,premium),'section-best')+
+    previewSection('Open Signals','Entry has already triggered.',openRows.length,previewCards(openRows,premium),'section-open')+
+    previewSection('Near 0.786','Highest-priority setups approaching the 0.786 zone.',nearRows.length,previewCards(nearRows,premium),'section-near')+
+    previewSection('Watchlist','Developing setups within 10% of the 0.786 level.',watchRows.length,table(watchRows.slice(0,100).map(signalRow),'watch'),'section-watch')+
+    previewSection('Good Historical Setups','Historical-quality names kept separate from the current opportunity.',hist.length,table(hist.map(qualityRow),'quality'),'section-history');
 
   document.getElementById('modeContent').innerHTML=html;
 }
