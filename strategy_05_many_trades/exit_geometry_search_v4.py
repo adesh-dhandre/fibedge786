@@ -75,15 +75,24 @@ def extract_symbol(downloaded, symbol):
 
 
 def simulate_one(row, df, stop_fib, target_fib):
-    high = float(row["High"])
-    low = float(row["Low"])
     entry_date = pd.Timestamp(row["Entry Date"]).normalize()
 
-    price_range = high - low
+    # V1/V3 trade files store Entry and SL, but not raw swing High/Low.
+    # Reconstruct the original Fib swing exactly from:
+    #   Entry = Low + Range * 0.786
+    #   SL    = Low + Range * 0.500
+    original_entry = float(row["Entry"])
+    original_sl = float(row["SL"])
+
+    price_range = (original_entry - original_sl) / (0.786 - 0.500)
     if not np.isfinite(price_range) or price_range <= 0:
         return None
 
-    entry = low + price_range * 0.786
+    low = original_sl - price_range * 0.500
+    high = low + price_range
+
+    # Keep the 0.786 entry fixed and test only the requested exit geometry.
+    entry = original_entry
     sl = low + price_range * stop_fib
     target = low + price_range * target_fib
 
