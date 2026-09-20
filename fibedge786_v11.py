@@ -58,17 +58,23 @@ HEADERS = {
     "Cache-Control": "no-cache",
 }
 
-def fetch_text(url, timeout=20):
+def fetch_text(url, timeout=8):
     r = requests.get(url, headers=HEADERS, timeout=timeout)
     r.raise_for_status()
     return r.text.lstrip("\ufeff")
 
-def load_csv(url):
-    return pd.read_csv(io.StringIO(fetch_text(url)))
+def load_csv_source(local_name, remote_url):
+    local = Path(local_name)
+    if local.exists():
+        return pd.read_csv(local)
+    return pd.read_csv(io.StringIO(fetch_text(remote_url)))
 
-def load_json(url):
+def load_json_source(local_name, remote_url):
+    local = Path(local_name)
     try:
-        return json.loads(fetch_text(url))
+        if local.exists():
+            return json.loads(local.read_text(encoding="utf-8"))
+        return json.loads(fetch_text(remote_url))
     except Exception:
         return {"candidates": []}
 
@@ -104,9 +110,8 @@ def days_between(a, b):
         return None
 
 def load_mapping():
-    local = Path("STOCK_UNIVERSE_MAPPING.csv")
     try:
-        m = pd.read_csv(local) if local.exists() else load_csv(MAP_URL)
+        m = load_csv_source("STOCK_UNIVERSE_MAPPING.csv", MAP_URL)
         if "SYMBOL" in m.columns:
             m["SYMBOL"] = m["SYMBOL"].astype(str).str.strip().str.upper()
         return m
@@ -642,8 +647,8 @@ def home():
         universe = "ALL"
 
     try:
-        signals = load_csv(SIGNALS_URL)
-        opp = load_csv(OPP_URL)
+        signals = load_csv_source("FIBEDGE_LATEST_SIGNALS.csv", SIGNALS_URL)
+        opp = load_csv_source("FIBEDGE_BEST_OPPORTUNITIES_V3.csv", OPP_URL)
         mapping = load_mapping()
 
         signals = apply_universe(signals, universe, mapping)
@@ -656,7 +661,11 @@ def home():
         elif mode == "PREMIUM":
             data = build_clean(signals, opp, premium=True)
         else:
-            data = build_premium_plus(load_json(PREMIUM_PLUS_URL), universe, mapping)
+            data = build_premium_plus(
+                load_json_source("netlify_site/premium_plus_candidates.json", PREMIUM_PLUS_URL),
+                universe,
+                mapping,
+            )
 
         valid_times = pd.to_datetime(signals.get("Price Time"), errors="coerce").dropna()
         latest = (
