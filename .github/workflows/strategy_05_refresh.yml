@@ -1,0 +1,57 @@
+name: Strategy 05 Daily Confirmation Refresh
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    # 17:00 IST, Monday-Friday. Gives Yahoo daily candle time to settle.
+    - cron: "30 11 * * 1-5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: strategy-05-daily-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout latest master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy yfinance
+
+      - name: Scan Strategy 05 confirmations
+        run: |
+          python strategy_05_live/strategy_05_scanner.py
+
+      - name: Publish Strategy 05 feed
+        run: |
+          git config user.name "FibEdge Bot"
+          git config user.email "fibedge-bot@users.noreply.github.com"
+
+          git add -f strategy_05_live/data/strategy_05_candidates.json
+          git add -f strategy_05_live/data/strategy_05_failed_symbols.csv
+
+          if git diff --cached --quiet; then
+            echo "No Strategy 05 data changes."
+          else
+            git commit -m "Auto refresh Strategy 05 confirmation data"
+            git pull --rebase origin master
+            git push origin master
+          fi
