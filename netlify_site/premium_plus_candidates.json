@@ -1,0 +1,15 @@
+{
+  "strategy": "FibEdge Premium+ V1",
+  "updated_at": null,
+  "market_date": null,
+  "candidate_count": 0,
+  "frozen_rules": {
+    "base_min_decline_pct": 8,
+    "premium_min_decline_pct": 15,
+    "min_swing_days": 15,
+    "max_lower_wick_pct": 10,
+    "max_compression_3v10": 0.9,
+    "min_close_above_786_pct": 2
+  },
+  "candidates": []
+}
