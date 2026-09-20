@@ -228,61 +228,6 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
   td{padding:10px 11px}td:before{content:attr(data-l);display:block;font-size:7px;text-transform:uppercase;color:#71879b;margin-bottom:3px}
   td:first-child{grid-column:1/-1;background:#0e1e2d;font-size:14px;font-weight:900}.load{width:100%}
 }
-
-/* FIBEDGE PROFESSIONAL DASHBOARD - RENDER PRODUCTION */
-html,body{background:#07111d!important;color:#edf6ff!important}
-body{background:radial-gradient(circle at 82% 0%,rgba(53,130,210,.10),transparent 28%),linear-gradient(180deg,#071321,#050d17 100%)!important}
-.nav{background:rgba(6,16,29,.96)!important;border-bottom:1px solid #18334d!important;box-shadow:none!important}
-.hero{background:transparent!important;box-shadow:none!important;border-color:#18334d!important;padding:26px 28px!important}
-.hero h1{font-size:36px!important;line-height:1.05!important;margin-bottom:0!important}
-.hero-guide{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:20px}
-.guide-item{padding:13px 14px;border:1px solid #1b3b56;border-radius:11px;background:rgba(8,25,42,.72)}
-.guide-item b{display:block;color:#eaf6ff;font-size:11px}
-.guide-item b span{margin-right:5px;color:#54baf4}
-.guide-item p{margin:6px 0 0!important;font-size:9px!important;line-height:1.5!important;color:#7894ad!important}
-.premium-guide{border-color:rgba(231,190,91,.42)} .premium-guide b span{color:#e7be5b}
-.status-guide{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.status-guide span{padding:7px 10px;border:1px solid #1b3952;border-radius:20px;background:#081827;color:#7791aa;font-size:8px}
-.status-guide b{margin-right:4px;color:#dcecff}
-.filters{background:#0a1928!important;border:1px solid #1a3853!important;box-shadow:none!important}
-.chip{background:#0d1e2f!important;border:1px solid #23435f!important;color:#8fa7bd!important;transition:.18s ease}
-.chip:hover{color:#dff3ff!important;border-color:#438bc5!important}
-.chip.on{background:#1683c4!important;border-color:#45b9f1!important;color:#fff!important;box-shadow:0 0 14px rgba(50,170,240,.15)}
-.pro-modes{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;margin:20px 0!important}
-.pro-modes .mode{min-height:138px;padding:18px!important;display:flex;flex-direction:column;align-items:flex-start;text-align:left;border-radius:14px!important;border:1px solid #234660!important;background:linear-gradient(145deg,#0f2235,#091725)!important;box-shadow:none!important;transition:.18s ease}
-.pro-modes .mode:hover{transform:translateY(-2px);border-color:#4aa6df!important}
-.pro-modes .mode.on{border-color:#55bdf5!important;background:linear-gradient(145deg,#113354,#0b1d2f)!important}
-.strategy-no{font-size:10px;font-weight:900;color:#54baf4}
-.pro-modes .name{margin-top:6px;font-size:15px!important;font-weight:800!important;color:#f1f8ff!important}
-.strategy-rate{margin-top:14px;font-size:28px;line-height:1;color:#69c7ff}
-.rate-label{margin-top:5px;font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:#738da4}
-.premiumplus-tab{border-color:rgba(231,190,91,.45)!important}
-.premiumplus-tab .strategy-no,.premiumplus-tab .strategy-rate{color:#e7be5b!important}
-.premiumplus-tab.on{border-color:#e7be5b!important;background:linear-gradient(145deg,#28251b,#101c29)!important}
-#watch,#hist,.section-watch,.section-history{display:none!important}
-.stats{grid-template-columns:repeat(3,1fr)!important}
-.stats .stat:nth-child(4){display:none!important}
-.section,.quality,.modepending,.stat,.pstat{background:#0a1928!important;border:1px solid #1d3a54!important;box-shadow:none!important;border-radius:14px!important}
-.section-best{border-top:2px solid #459fe3!important}.section-open{border-top:2px solid #35d0a5!important}.section-near{border-top:2px solid #e0b456!important}
-.card,.pcard{background:linear-gradient(145deg,#0d2032,#091725)!important;border:1px solid #1d3f5c!important;box-shadow:none!important;border-radius:13px!important;transition:.18s ease;overflow:hidden}
-.card:hover,.pcard:hover{transform:translateY(-2px);border-color:#4399d2!important}
-.ctop,.pcardhead{padding:15px!important;border-bottom:1px solid #183750!important;display:flex!important;align-items:flex-start!important;justify-content:space-between!important}
-.sym,.pcardsym{color:#f2f8ff!important}.price,.pprice{color:#f5faff!important}
-.card-status{margin-top:4px;color:#55bdf5;font-size:8px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.gold-status{color:#e7be5b!important}
-.simplemetrics,.pmetrics{padding:14px;display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:8px!important}
-.simplemetrics>div,.pmetric{background:#071521!important;border:1px solid #18364f!important;border-radius:8px!important;padding:9px!important}
-.simplemetrics span,.pmetric span{display:block;font-size:7px;color:#6f879e!important;text-transform:uppercase;letter-spacing:.06em}
-.simplemetrics b,.pmetric b{display:block;margin-top:4px;color:#dcecff!important;font-size:11px}
-.pmetric.special{border-color:rgba(90,170,235,.35)!important}
-.premiumplus-card{border-color:rgba(231,190,91,.35)!important}.premium-pill{border-color:rgba(231,190,91,.45)!important;color:#e7be5b!important}
-.title{color:#f0f7ff!important}.desc,.muted,.lab,.pmeta{color:#7891a8!important}
-@keyframes cardIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.card,.pcard{animation:cardIn .25s ease both}
-@media(max-width:950px){.pro-modes,.hero-guide{grid-template-columns:repeat(2,1fr)!important}}
-@media(max-width:600px){.pro-modes{grid-template-columns:1fr 1fr!important;gap:8px!important}.pro-modes .mode{min-height:122px;padding:13px!important}.strategy-rate{font-size:23px}.hero-guide{grid-template-columns:1fr!important}.simplemetrics,.pmetrics{grid-template-columns:repeat(2,1fr)!important}}
-@media(prefers-reduced-motion:reduce){.card,.pcard,.mode{animation:none!important;transition:none!important}}
-
 </style>
 </head>
 <body class="theme-all">
@@ -295,66 +240,29 @@ body{background:radial-gradient(circle at 82% 0%,rgba(53,130,210,.10),transparen
 
 <main class="page" id="page">
   <section class="hero">
-    <div class="eyebrow">Dashboard guide</div>
-    <h1>Read the setup in seconds.</h1>
-
-    <div class="hero-guide">
-      <div class="guide-item">
-        <b><span>01</span> Classic FibEdge</b>
-        <p>Broadest 0.786 scanner for valid Fibonacci structures.</p>
-      </div>
-      <div class="guide-item">
-        <b><span>02</span> Clean Swings</b>
-        <p>Major high-to-low swings with cleaner recovery structure.</p>
-      </div>
-      <div class="guide-item">
-        <b><span>03</span> Premium Clean</b>
-        <p>Selective big-swing recovery tier. Historical resolved win rate 56.36%.</p>
-      </div>
-      <div class="guide-item premium-guide">
-        <b><span>04</span> Premium+ V1</b>
-        <p>Rare behavior-confirmed setup after the daily candle closes.</p>
-      </div>
-    </div>
-
-    <div class="status-guide">
-      <span><b>Best Setups</b> highest priority</span>
-      <span><b>Open Now</b> entry triggered</span>
-      <span><b>Near Structure</b> approaching 0.786</span>
-    </div>
-
+    <div class="eyebrow">Fibonacci setup intelligence</div>
+    <h1>Cleaner setups.<br>Faster decisions.</h1>
+    <p>Three separate FibEdge views for the original scanner, dominant clean swings, and the highest-quality recovery structures. Use the scanner to narrow the market, then confirm the chart manually.</p>
     <div class="herofoot">
       <span class="tag live">LIVE DASHBOARD</span>
-      <span class="tag">0.786 ENTRY</span>
-      <span class="tag">0.500 STOP</span>
+      <span class="tag">0.786 ENTRY ZONE</span>
+      <span class="tag">0.500 SL</span>
       <span class="tag">1.260 TARGET</span>
     </div>
   </section>
 
-  <div class="modebar pro-modes" id="modebar">
+  <div class="modebar" id="modebar">
     <button class="mode on" data-mode="CLASSIC">
-      <span class="strategy-no">01</span>
-      <span class="name">Classic FibEdge</span>
-      <strong class="strategy-rate">30.44%</strong>
-      <span class="rate-label">Historical win rate</span>
+      <span class="name">01 · Classic FibEdge</span>
+      <span class="note">Your existing live scanner and historical-quality ranking.</span>
     </button>
     <button class="mode" data-mode="CLEAN">
-      <span class="strategy-no">02</span>
-      <span class="name">Clean Swings</span>
-      <strong class="strategy-rate">42.52%</strong>
-      <span class="rate-label">Historical win rate</span>
+      <span class="name">02 · Clean Swings</span>
+      <span class="note">Dominant high → major low → structured recovery.</span>
     </button>
     <button class="mode" data-mode="PREMIUM">
-      <span class="strategy-no">03</span>
-      <span class="name">Premium Clean</span>
-      <strong class="strategy-rate">56.36%</strong>
-      <span class="rate-label">Resolved historical win rate</span>
-    </button>
-    <button class="mode premiumplus-tab" data-mode="PREMIUMPLUS">
-      <span class="strategy-no">04</span>
-      <span class="name">Premium+ V1</span>
-      <strong class="strategy-rate">76.97%</strong>
-      <span class="rate-label">Historical win rate</span>
+      <span class="name">03 · Premium Clean</span>
+      <span class="note">Highest recovery quality. Fewer setups, stronger historical hit rate.</span>
     </button>
   </div>
 
@@ -368,8 +276,8 @@ body{background:radial-gradient(circle at 82% 0%,rgba(53,130,210,.10),transparen
 
     <div class="stats">
       <div class="stat"><div class="lab">Stocks Scanned</div><div class="num" id="total">—</div><small>Current universe</small></div>
-      <div class="stat"><div class="lab">Open Now</div><div class="num g" id="openN">—</div><small>0.786 already triggered</small></div>
-      <div class="stat"><div class="lab">Near Structure</div><div class="num y" id="nearN">—</div><small>Highest-priority approach</small></div>
+      <div class="stat"><div class="lab">Open Signals</div><div class="num g" id="openN">—</div><small>0.786 already triggered</small></div>
+      <div class="stat"><div class="lab">Near 0.786</div><div class="num y" id="nearN">—</div><small>Highest-priority approach</small></div>
       <div class="stat"><div class="lab">Waiting</div><div class="num b" id="waitN">—</div><small>Developing setups</small></div>
     </div>
 
@@ -384,7 +292,7 @@ body{background:radial-gradient(circle at 82% 0%,rgba(53,130,210,.10),transparen
     </div>
 
     <div class="quality section-best">
-      <div class="titlewrap"><div class="title">Best Setups</div><div class="desc">Highest-priority setups from the selected strategy.</div></div>
+      <div class="titlewrap"><div class="title">Best Setups Now</div><div class="desc">Historical quality combined with current 0.786 position.</div></div>
       <div class="summary">
         <div class="sum"><div class="lab">Strong Now</div><div class="num g" id="strongN">0</div></div>
         <div class="sum"><div class="lab">Good Setups</div><div class="num b" id="goodNTop">0</div></div>
@@ -394,12 +302,12 @@ body{background:radial-gradient(circle at 82% 0%,rgba(53,130,210,.10),transparen
     </div>
 
     <div class="section section-open" id="open">
-      <div class="head"><div class="titlewrap"><div class="title">Open Now</div><div class="desc">Entry condition has triggered.</div></div><div class="count" id="openCount">0</div></div>
+      <div class="head"><div class="titlewrap"><div class="title">Open Signals</div><div class="desc">Entry has already triggered.</div></div><div class="count" id="openCount">0</div></div>
       <div id="openRows"></div><div class="loadw" id="openLoad"></div>
     </div>
 
     <div class="section section-near" id="near">
-      <div class="head"><div class="titlewrap"><div class="title">Near Structure</div><div class="desc">Approaching the 0.786 entry structure.</div></div><div class="count" id="nearCount">0</div></div>
+      <div class="head"><div class="titlewrap"><div class="title">Near 0.786</div><div class="desc">Highest-priority upcoming setups.</div></div><div class="count" id="nearCount">0</div></div>
       <div id="nearRows"></div>
     </div>
 
@@ -422,8 +330,7 @@ const BASE='https://raw.githubusercontent.com/adesh-dhandre/fibedge786/master/';
 const URLS={
   signals:BASE+'FIBEDGE_LATEST_SIGNALS.csv',
   opp:BASE+'FIBEDGE_BEST_OPPORTUNITIES_V3.csv',
-  map:'./STOCK_UNIVERSE_MAPPING.csv',
-  premiumPlus:'./premium_plus_candidates.json'
+  map:'./STOCK_UNIVERSE_MAPPING.csv'
 };
 
 const FILTERS=[
@@ -436,13 +343,12 @@ const FILTERS=[
   {key:'MICROCAP250',label:'Microcap 250'}
 ];
 
-let DATA={signals:[],opp:[],map:[],premiumPlus:{candidates:[]}};
+let DATA={signals:[],opp:[],map:[]};
 let selected='ALL',mode='CLASSIC',openLimit=24,watchLimit=100,qualityLimit=20;
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function parseCSV(text){const rows=[];let row=[],field='',q=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(q){if(c==='"'&&n==='"'){field+='"';i++}else if(c==='"'){q=false}else field+=c}else{if(c==='"')q=true;else if(c===','){row.push(field);field=''}else if(c==='\n'){row.push(field);rows.push(row);row=[];field=''}else if(c!=='\r')field+=c}}if(field.length||row.length){row.push(field);rows.push(row)}const head=rows.shift()||[];return rows.filter(r=>r.some(x=>x!=='')).map(r=>Object.fromEntries(head.map((h,i)=>[h.trim(),r[i]??''])))} 
 async function fetchCSV(url){const sep=url.includes('?')?'&':'?';const r=await fetch(url+sep+'t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('Could not load '+url.split('/').pop()+' ('+r.status+')');return parseCSV((await r.text()).replace(/^\uFEFF/,''))}
-async function fetchJSON(url){const sep=url.includes('?')?'&':'?';const r=await fetch(url+sep+'t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('Could not load '+url.split('/').pop()+' ('+r.status+')');return await r.json()}
 function sym(v){return String(v||'').replace('.NS','').trim().toUpperCase()}
 function num(v,d=2){const x=Number(v);return Number.isFinite(x)?x.toFixed(d):'-'}
 function pct(v,plus=false){const x=Number(v);if(!Number.isFinite(x))return '-';return(plus&&x>0?'+':'')+x.toFixed(2)+'%'}
@@ -452,40 +358,10 @@ function filtered(rows){const set=currentFilterSet();return set?rows.filter(r=>s
 function mapPreviewWarning(){return selected!=='ALL'&&!hasMapColumn(selected)}
 function byDistance(a,b){return Number(a['Distance %'])-Number(b['Distance %'])}
 function byAbsDistance(a,b){return Math.abs(Number(a['Distance %']))-Math.abs(Number(b['Distance %']))}
-function signalRow(r){
-  const high=Number(r.High),low=Number(r.Low);
-  const decline=(Number.isFinite(high)&&Number.isFinite(low)&&high>0)?((high-low)/high*100):null;
-  const swing=daysBetween(r['High Date'],r['Low Date']);
-  return{
-    Symbol:sym(r.Symbol),Price:num(r.Price),Status:r.Status||'-',
-    Entry:num(r.Entry),SL:num(r.SL),Target:num(r.Target),
-    Distance:pct(r['Distance %']),
-    Decline:Number.isFinite(decline)?decline.toFixed(1)+'%':'-',
-    Swing:swing?swing+'d':'-',
-    Time:r['Price Time']||'-'
-  }
-}
+function signalRow(r){return{Symbol:sym(r.Symbol),Price:num(r.Price),Status:r.Status||'-',Entry:num(r.Entry),SL:num(r.SL),Target:num(r.Target),Distance:pct(r['Distance %']),Time:r['Price Time']||'-'}}
 function qualityRow(r){return{Symbol:sym(r.Symbol),Price:num(r.Price),Entry:num(r.Entry),State:r['Current State']||'-',Grade:r['Live Grade']||'-',Speed:r['Speed Group']||'-',Win:pct(r['Win Rate %']),Exp:pct(r['Expectancy %'],true)}}
-function cards(rows,badge){
-  if(!rows.length)return'<div class="empty">No setups right now.</div>';
-  return '<div class="grid">'+rows.map(r=>
-    '<div class="card">'+
-      '<div class="ctop">'+
-        '<div><div class="sym">'+esc(r.Symbol)+'</div><div class="card-status">'+esc(badge)+'</div></div>'+
-        '<div class="price">₹'+esc(r.Price)+'</div>'+
-      '</div>'+
-      '<div class="simplemetrics">'+
-        '<div><span>Entry</span><b>₹'+esc(r.Entry)+'</b></div>'+
-        '<div><span>Stop</span><b>₹'+esc(r.SL)+'</b></div>'+
-        '<div><span>Target</span><b>₹'+esc(r.Target)+'</b></div>'+
-        '<div><span>Distance</span><b>'+esc(r.Distance)+'</b></div>'+
-        '<div><span>Decline</span><b>'+esc(r.Decline||'-')+'</b></div>'+
-        '<div><span>Swing</span><b>'+esc(r.Swing||'-')+'</b></div>'+
-      '</div>'+
-    '</div>'
-  ).join('')+'</div>';
-}
-function strongCards(rows){return cards(rows,'BEST')}
+function cards(rows,badge){if(!rows.length)return'<div class="empty">No setups right now.</div>';return'<div class="grid">'+rows.map(r=>'<div class="card"><div class="ctop"><div class="sym">'+esc(r.Symbol)+'</div><div class="badge '+(badge==='OPEN'?'open':'near')+'">'+esc(badge)+'</div></div><div class="body"><div class="muted">Latest Price</div><div class="price">₹'+esc(r.Price)+'</div><div class="muted">'+esc(r.Time)+'</div><div class="levels"><div class="box"><span class="lab">Entry</span><b>'+esc(r.Entry)+'</b></div><div class="box"><span class="lab">Stop</span><b>'+esc(r.SL)+'</b></div><div class="box"><span class="lab">Target</span><b>'+esc(r.Target)+'</b></div></div></div></div>').join('')+'</div>'}
+function strongCards(rows){if(!rows.length)return'<div class="empty">No Strong Now setups.</div>';return'<div class="grid">'+rows.map(r=>'<div class="card"><div class="ctop"><div class="sym">'+esc(r.Symbol)+'</div><div class="badge open">STRONG NOW · '+esc(r.Grade)+' · '+esc(r.Speed)+'</div></div><div class="body"><div class="muted">Current Price</div><div class="price">₹'+esc(r.Price)+'</div><div class="muted">'+esc(r.State)+'</div><div class="metrics"><div class="box"><span class="lab">Entry</span><b>'+esc(r.Entry)+'</b></div><div class="box"><span class="lab">Win Rate</span><b>'+esc(r.Win)+'</b></div><div class="box"><span class="lab">Expectancy</span><b>'+esc(r.Exp)+'</b></div></div></div></div>').join('')+'</div>'}
 function table(rows,kind){if(!rows.length)return'<div class="empty">No matching setups.</div>';let cols;if(kind==='quality')cols=[['Symbol','Symbol'],['State','State'],['Price','Price'],['Entry','Entry'],['Grade','Grade'],['Win','Win Rate'],['Exp','Expectancy'],['Speed','Speed']];else if(kind==='search')cols=[['Symbol','Symbol'],['Price','Price'],['Status','Status'],['Entry','Entry'],['SL','SL'],['Target','Target'],['Distance','Distance'],['Time','Price Time']];else cols=[['Symbol','Symbol'],['Price','Price'],['Distance','Distance'],['Entry','Entry'],['SL','SL'],['Target','Target'],['Time','Price Time']];return'<div class="tablewrap"><table><thead><tr>'+cols.map(c=>'<th>'+c[1]+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+cols.map(c=>'<td data-l="'+esc(c[1])+'">'+esc(r[c[0]]??'-')+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'}
 function btn(id,label,fn){document.getElementById(id).innerHTML='<button class="load" type="button">'+label+'</button>';document.querySelector('#'+id+' button').onclick=fn}
 function clearBtn(id){document.getElementById(id).innerHTML=''}
@@ -507,167 +383,75 @@ function cleanPreviewRows(){
   return rows;
 }
 function previewCards(rows,premium){
-  if(!rows.length)return'<div class="empty">No setups right now.</div>';
-  return '<div class="previewgrid">'+rows.slice(0,12).map((r,i)=>{
-    const status=r.Status==='NEAR 0.786'?'NEAR':r.Status==='OPEN'?'OPEN':r.Status==='ENTRY AREA'?'OPEN':'';
-    const recovery=premium && r['Recovery Efficiency']!==undefined
-      ? '<div class="pmetric special"><span>Recovery Eff.</span><b>'+esc(num(r['Recovery Efficiency']))+'</b></div>'
-      : '';
-    return '<div class="pcard" style="animation-delay:'+(i*35)+'ms">'+
-      '<div class="pcardhead"><div><div class="pcardsym">'+esc(sym(r.Symbol))+'</div><div class="card-status">'+esc(status)+'</div></div><div class="pprice">₹'+esc(num(r.Price))+'</div></div>'+
-      '<div class="pmetrics">'+
-        '<div class="pmetric"><span>Entry</span><b>₹'+esc(num(r.Entry))+'</b></div>'+
-        '<div class="pmetric"><span>Stop</span><b>₹'+esc(num(r.SL))+'</b></div>'+
-        '<div class="pmetric"><span>Target</span><b>₹'+esc(num(r.Target))+'</b></div>'+
-        '<div class="pmetric"><span>Distance</span><b>'+esc(pct(r['Distance %']))+'</b></div>'+
-        '<div class="pmetric"><span>Decline</span><b>'+esc(r._decline?r._decline.toFixed(1)+'%':'-')+'</b></div>'+
-        '<div class="pmetric"><span>Swing</span><b>'+esc(r._swing?r._swing+'d':'-')+'</b></div>'+
-        recovery+
-      '</div>'+
-    '</div>';
+  if(!rows.length)return'<div class="empty">No current stocks in this universe.</div>';
+  return'<div class="previewgrid">'+rows.slice(0,12).map((r,i)=>{
+    const status=r.Status==='NEAR 0.786'?'NEAR 0.786':r.Status==='OPEN'?'OPEN':r.Status==='ENTRY AREA'?'ENTRY AREA':'WATCH';
+    const badge=premium?'PREMIUM UI':'CLEAN UI';
+    return '<div class="pcard" style="animation-delay:'+(i*35)+'ms"><div class="pcardhead"><div class="pcardsym">'+esc(sym(r.Symbol))+'</div><div class="pcardbadge">'+badge+' · '+esc(status)+'</div></div><div class="pprice">₹'+esc(num(r.Price))+'</div><div class="pmeta">'+esc(r['Price Time']||'-')+'</div><div class="pmetrics"><div class="pmetric"><span>Entry</span><b>'+esc(num(r.Entry))+'</b></div><div class="pmetric"><span>Target</span><b>'+esc(num(r.Target))+'</b></div><div class="pmetric"><span>Stop</span><b>'+esc(num(r.SL))+'</b></div><div class="pmetric"><span>Decline</span><b>'+esc(r._decline?r._decline.toFixed(1)+'%':'—')+'</b></div><div class="pmetric"><span>Swing</span><b>'+esc(r._swing?r._swing+'d':'—')+'</b></div><div class="pmetric"><span>Distance</span><b>'+esc(pct(r['Distance %']))+'</b></div></div></div>';
   }).join('')+'</div>';
 }
 function previewSection(title,desc,count,html,cls){
   return '<div class="section '+(cls||'')+'"><div class="head"><div class="titlewrap"><div class="title">'+esc(title)+'</div><div class="desc">'+esc(desc)+'</div></div><div class="count">'+count+'</div></div>'+html+'</div>';
 }
-function premiumPlusRows(){
-  let rows=[...(DATA.premiumPlus?.candidates||[])];
-  const set=currentFilterSet();
-  if(set)rows=rows.filter(r=>set.has(sym(r.symbol)));
-  return rows;
-}
-function premiumPlusCards(rows){
-  if(!rows.length)return'<div class="empty"><b>No Premium+ setup today.</b><br><br>Waiting for the frozen V1 conditions to appear after a completed daily candle.</div>';
-  return '<div class="previewgrid">'+rows.map((r,i)=>
-    '<div class="pcard premiumplus-card" style="animation-delay:'+(i*35)+'ms">'+
-      '<div class="pcardhead"><div><div class="pcardsym">'+esc(sym(r.symbol))+'</div><div class="card-status gold-status">CONFIRMED</div></div><div class="pprice">₹'+esc(num(r.close))+'</div></div>'+
-      '<div class="pmetrics">'+
-        '<div class="pmetric"><span>Entry 0.786</span><b>₹'+esc(num(r.fib_0786))+'</b></div>'+
-        '<div class="pmetric"><span>Stop</span><b>₹'+esc(num(r.sl))+'</b></div>'+
-        '<div class="pmetric"><span>Target</span><b>₹'+esc(num(r.target))+'</b></div>'+
-        '<div class="pmetric"><span>Decline</span><b>'+esc(num(r.decline_pct))+'%</b></div>'+
-        '<div class="pmetric"><span>Swing</span><b>'+esc(r.swing_days||'-')+'d</b></div>'+
-        '<div class="pmetric special"><span>Lower Wick</span><b>'+esc(num(r.lower_wick_pct))+'%</b></div>'+
-        '<div class="pmetric special"><span>Compression</span><b>'+esc(num(r.compression_3v10))+'</b></div>'+
-        '<div class="pmetric special"><span>Close above 0.786</span><b>+'+esc(num(r.close_vs_786_pct))+'%</b></div>'+
-      '</div>'+
-    '</div>'
-  ).join('')+'</div>';
-}
-function renderPremiumPlusView(){
-  const rows=premiumPlusRows();
-  const uni=FILTERS.find(x=>x.key===selected)?.label||'All';
-  const html=
-    '<div class="previewtop"><div><h2>Premium+ V1</h2><p>Frozen behavior-confirmed setup. Historical backtest: 234 wins / 304 resolved = 76.97%.</p></div><span class="pill premium-pill">PREMIUM+ V1</span></div>'+
-    '<div class="previewstats">'+
-      '<div class="pstat"><div class="lab">Candidates</div><b>'+rows.length+'</b></div>'+
-      '<div class="pstat"><div class="lab">Historical Win Rate</div><b>76.97%</b></div>'+
-      '<div class="pstat"><div class="lab">Resolved Backtest</div><b>304</b></div>'+
-      '<div class="pstat"><div class="lab">Universe</div><b style="font-size:14px;margin-top:10px">'+esc(uni.toUpperCase())+'</b></div>'+
-    '</div>'+
-    previewSection('Best Setups','Confirmed Premium+ candidates after the daily close.',rows.length,premiumPlusCards(rows),'section-best')+
-    previewSection('Open Now','Premium+ uses next-session entry after confirmation.',0,'<div class="empty">No separate open list for Premium+.</div>','section-open')+
-    previewSection('Near Structure','Premium+ only appears after full confirmation.',0,'<div class="empty">Near-only structures are intentionally excluded from Premium+.</div>','section-near');
-  document.getElementById('modeContent').innerHTML=html;
-}
 function renderModeView(){
   const classic=document.getElementById('classicArea'),pending=document.getElementById('modePending');
   if(mode==='CLASSIC'){classic.style.display='block';pending.style.display='none';render();return}
-  classic.style.display='none';pending.style.display='block';
-  if(mode==='PREMIUMPLUS'){renderPremiumPlusView();return}
 
+  classic.style.display='none';pending.style.display='block';
   let rows=cleanPreviewRows();
   const premium=mode==='PREMIUM';
-  if(premium)rows=[...rows].sort((a,b)=>(b._quality-a._quality)||Math.abs(Number(a['Distance %']))-Math.abs(Number(b['Distance %'])));
+
+  if(premium){
+    rows=[...rows].sort((a,b)=>(b._quality-a._quality)||Math.abs(Number(a['Distance %']))-Math.abs(Number(b['Distance %'])));
+  }
 
   const uni=FILTERS.find(x=>x.key===selected)?.label||'All';
-  const visibleRows=rows.filter(r=>['OPEN','ENTRY AREA','NEAR 0.786'].includes(r.Status));
-  const openRows=visibleRows.filter(r=>['OPEN','ENTRY AREA'].includes(r.Status)).sort(byAbsDistance);
-  const nearRows=visibleRows.filter(r=>r.Status==='NEAR 0.786').sort(byDistance);
-  const bestRows=[...visibleRows].sort((a,b)=>premium
-    ?((b._quality-a._quality)||Math.abs(Number(a['Distance %']))-Math.abs(Number(b['Distance %'])))
-    :(Math.abs(Number(a['Distance %']))-Math.abs(Number(b['Distance %'])))).slice(0,9);
+  const openRows=rows.filter(r=>['OPEN','ENTRY AREA'].includes(r.Status)).sort(byAbsDistance);
+  const nearRows=rows.filter(r=>r.Status==='NEAR 0.786').sort(byDistance);
+  const watchRows=rows.filter(r=>r.Status==='WAITING FOR 0.786'&&Number(r['Distance %'])<=10).sort(byDistance);
+  const bestRows=[...rows].sort((a,b)=>premium?((b._quality-a._quality)||Math.abs(Number(a['Distance %']))-Math.abs(Number(b['Distance %']))):(Math.abs(Number(a['Distance %']))-Math.abs(Number(b['Distance %'])))).slice(0,9);
+
+  let opp=filtered(DATA.opp);
+  const cleanSyms=new Set(rows.map(r=>sym(r.Symbol)));
+  let hist=opp.filter(r=>cleanSyms.has(sym(r.Symbol))&&['ELITE NOW','STRONG NOW','GOOD'].includes(r.Opportunity));
+  if(!hist.length) hist=opp.filter(r=>['ELITE NOW','STRONG NOW','GOOD'].includes(r.Opportunity));
+  hist=hist.sort((a,b)=>(Number(b['Quality Score'])||0)-(Number(a['Quality Score'])||0)).slice(0,20);
+
+  const mappingWarn=mapPreviewWarning()
+    ?'<div class="previewalert"><b>'+esc(uni)+'</b> button is visible for layout testing, but its exact constituent mapping is not wired into this preview yet. For now this mode shows the full candidate pool. We will connect the exact NIFTY 500 / MidSmall 400 mapping before production.</div>'
+    :'';
 
   const modeTitle=premium?'Premium Clean':'Clean Swings';
   const modeText=premium
-    ?'Selective big-swing recovery tier. Historical resolved win rate: 56.36%.'
-    :'Major high-to-low swing structures. Historical win rate: 42.52%.';
-  const pill=premium?'PREMIUM CLEAN':'CLEAN SWINGS';
+    ?'Full Premium workspace with every section separated exactly like Classic. Exact Recovery Efficiency ≥ 0.94 data feed will replace the preview ranking before production.'
+    :'Full Clean Swing workspace with every section separated exactly like Classic. The dedicated dominant-high clean-swing feed will replace this preview data before production.';
+  const pill=premium?'PREMIUM MODE · LOCAL PREVIEW':'CLEAN MODE · LOCAL PREVIEW';
+  const note=premium
+    ?'Design preview only: these cards are not yet being claimed as Recovery Efficiency ≥ 0.94 signals.'
+    :'Design preview: current live FibEdge stocks are filtered by 20%+ decline and 40+ swing days where available.';
 
   const html=
     '<div class="previewtop"><div><h2>'+modeTitle+'</h2><p>'+modeText+'</p></div><span class="pill">'+pill+'</span></div>'+
+    '<div class="previewalert">'+note+'</div>'+mappingWarn+
     '<div class="previewstats">'+
-      '<div class="pstat"><div class="lab">Best Setups</div><b>'+bestRows.length+'</b></div>'+
-      '<div class="pstat"><div class="lab">Open Now</div><b>'+openRows.length+'</b></div>'+
-      '<div class="pstat"><div class="lab">Near Structure</div><b>'+nearRows.length+'</b></div>'+
+      '<div class="pstat"><div class="lab">Candidates</div><b>'+rows.length+'</b></div>'+
+      '<div class="pstat"><div class="lab">Open Signals</div><b>'+openRows.length+'</b></div>'+
+      '<div class="pstat"><div class="lab">Near 0.786</div><b>'+nearRows.length+'</b></div>'+
       '<div class="pstat"><div class="lab">Universe</div><b style="font-size:14px;margin-top:10px">'+esc(uni.toUpperCase())+'</b></div>'+
     '</div>'+
-    previewSection('Best Setups','Highest-priority setups from this strategy.',bestRows.length,previewCards(bestRows,premium),'section-best')+
-    previewSection('Open Now','Entry condition has triggered.',openRows.length,previewCards(openRows,premium),'section-open')+
-    previewSection('Near Structure','Approaching the 0.786 entry structure.',nearRows.length,previewCards(nearRows,premium),'section-near');
+    previewSection('Best Setups Now',premium?'Highest-ranked Premium-style candidates for manual chart review.':'Closest/highest-priority Clean Swing candidates.',bestRows.length,previewCards(bestRows,premium),'section-best')+
+    previewSection('Open Signals','Entry has already triggered.',openRows.length,previewCards(openRows,premium),'section-open')+
+    previewSection('Near 0.786','Highest-priority setups approaching the 0.786 zone.',nearRows.length,previewCards(nearRows,premium),'section-near')+
+    previewSection('Watchlist','Developing setups within 10% of the 0.786 level.',watchRows.length,table(watchRows.slice(0,100).map(signalRow),'watch'),'section-watch')+
+    previewSection('Good Historical Setups','Historical-quality names kept separate from the current opportunity.',hist.length,table(hist.map(qualityRow),'quality'),'section-history');
 
   document.getElementById('modeContent').innerHTML=html;
 }
 function renderChips(){const box=document.getElementById('chips');box.innerHTML=FILTERS.map(f=>'<button class="chip '+(f.key===selected?'on ':'')+'" data-k="'+f.key+'">'+f.label+(f.requires&&!hasMapColumn(f.requires)?' · PREVIEW':'')+'</button>').join('');box.querySelectorAll('button').forEach(b=>b.onclick=()=>{selected=b.dataset.k;openLimit=24;watchLimit=100;qualityLimit=20;setTheme();renderChips();renderModeView();history.replaceState(null,'','?universe='+encodeURIComponent(selected))})}
 function latestLabel(rows){const ds=rows.map(r=>new Date(r['Price Time'])).filter(d=>!isNaN(d));if(!ds.length)return'Unavailable';const d=new Date(Math.max(...ds.map(x=>x.getTime())));return d.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})}
 function renderSearch(sig){const q=document.getElementById('searchInput').value.trim().toUpperCase(),sec=document.getElementById('searchSection');if(!q){sec.style.display='none';return}const rs=sig.filter(r=>sym(r.Symbol).includes(q)).map(signalRow);sec.style.display='block';document.getElementById('searchDesc').textContent=q;document.getElementById('searchCount').textContent=rs.length;document.getElementById('searchRows').innerHTML=table(rs,'search')}
-function render(){
-  if(mode!=='CLASSIC')return;
-  const page=document.getElementById('page'),err=document.getElementById('error');
-  page.classList.add('loading');err.style.display='none';
-  try{
-    const sig=filtered(DATA.signals),opp=filtered(DATA.opp);
-    const od=sig.filter(r=>r.Status==='OPEN').sort(byAbsDistance);
-    const nd=sig.filter(r=>r.Status==='NEAR 0.786').sort(byDistance);
-    const wd=sig.filter(r=>r.Status==='WAITING FOR 0.786');
-    const strong=opp.filter(r=>['ELITE NOW','STRONG NOW'].includes(r.Opportunity));
-    const good=opp.filter(r=>r.Opportunity==='GOOD');
-    const qw=opp.filter(r=>r.Opportunity==='WATCH');
-    const sigMap=new Map(sig.map(r=>[sym(r.Symbol),r]));
-    const strongSignalRows=strong.map(r=>sigMap.get(sym(r.Symbol))).filter(Boolean).map(signalRow);
-
-    document.getElementById('latest').textContent=latestLabel(sig);
-    document.getElementById('total').textContent=sig.length;
-    document.getElementById('openN').textContent=od.length;
-    document.getElementById('nearN').textContent=nd.length;
-    document.getElementById('waitN').textContent=wd.length;
-    document.getElementById('strongN').textContent=strong.length;
-    document.getElementById('goodNTop').textContent=good.length;
-    document.getElementById('qwatchN').textContent=qw.length;
-
-    document.getElementById('strongRows').innerHTML=strongCards(strongSignalRows);
-    document.getElementById('openCount').textContent=od.length;
-    document.getElementById('openRows').innerHTML=cards(od.slice(0,openLimit).map(signalRow),'OPEN');
-    document.getElementById('nearCount').textContent=nd.length;
-    document.getElementById('nearRows').innerHTML=cards(nd.map(signalRow),'NEAR');
-
-    renderSearch(sig);
-  }catch(e){
-    err.textContent=e.message||String(e);
-    err.style.display='block';
-  }finally{
-    page.classList.remove('loading');
-  }
-}
-async function loadAll(silent=false){
-  const err=document.getElementById('error');
-  if(!silent)document.getElementById('latest').textContent='Loading…';
-  try{
-    const[signals,opp,map,premiumPlus]=await Promise.all([
-      fetchCSV(URLS.signals),
-      fetchCSV(URLS.opp),
-      fetchCSV(URLS.map),
-      fetchJSON(URLS.premiumPlus).catch(()=>({candidates:[]}))
-    ]);
-    DATA={signals,opp,map,premiumPlus};
-    renderChips();
-    renderModeView();
-  }catch(e){
-    err.textContent='Data load failed: '+(e.message||e);
-    err.style.display='block';
-    document.getElementById('latest').textContent='Unavailable';
-  }
-}
+function render(){if(mode!=='CLASSIC')return;const page=document.getElementById('page'),err=document.getElementById('error');page.classList.add('loading');err.style.display='none';try{const sig=filtered(DATA.signals),opp=filtered(DATA.opp);const od=sig.filter(r=>r.Status==='OPEN').sort(byAbsDistance);const nd=sig.filter(r=>r.Status==='NEAR 0.786').sort(byDistance);const wd=sig.filter(r=>r.Status==='WAITING FOR 0.786');const ww=wd.filter(r=>Number(r['Distance %'])<=10).sort(byDistance);const strong=opp.filter(r=>['ELITE NOW','STRONG NOW'].includes(r.Opportunity));const good=opp.filter(r=>r.Opportunity==='GOOD');const qw=opp.filter(r=>r.Opportunity==='WATCH');document.getElementById('latest').textContent=latestLabel(sig);document.getElementById('total').textContent=sig.length;document.getElementById('openN').textContent=od.length;document.getElementById('nearN').textContent=nd.length;document.getElementById('waitN').textContent=wd.length;document.getElementById('strongN').textContent=strong.length;document.getElementById('goodNTop').textContent=good.length;document.getElementById('qwatchN').textContent=qw.length;document.getElementById('strongRows').innerHTML=strongCards(strong.map(qualityRow));document.getElementById('openCount').textContent=od.length;document.getElementById('openRows').innerHTML=cards(od.slice(0,openLimit).map(signalRow),'OPEN');document.getElementById('nearCount').textContent=nd.length;document.getElementById('nearRows').innerHTML=cards(nd.map(signalRow),'NEAR ENTRY');document.getElementById('watchCount').textContent=ww.length;document.getElementById('watchRows').innerHTML=table(ww.slice(0,watchLimit).map(signalRow),'watch');document.getElementById('goodCount').textContent=good.length;document.getElementById('goodRows').innerHTML=table(good.slice(0,qualityLimit).map(qualityRow),'quality');if(od.length>openLimit)btn('openLoad','Load More Open Signals',()=>{openLimit+=24;render()});else clearBtn('openLoad');if(ww.length>watchLimit)btn('watchLoad','Load More Watchlist Stocks',()=>{watchLimit+=100;render()});else clearBtn('watchLoad');if(good.length>qualityLimit)btn('goodLoad','Load More Good Setups',()=>{qualityLimit+=20;render()});else clearBtn('goodLoad');renderSearch(sig)}catch(e){err.textContent=e.message||String(e);err.style.display='block'}finally{page.classList.remove('loading')}}
+async function loadAll(silent=false){const err=document.getElementById('error');if(!silent)document.getElementById('latest').textContent='Loading…';try{const[signals,opp,map]=await Promise.all([fetchCSV(URLS.signals),fetchCSV(URLS.opp),fetchCSV(URLS.map)]);DATA={signals,opp,map};renderChips();renderModeView()}catch(e){err.textContent='Data load failed: '+(e.message||e);err.style.display='block';document.getElementById('latest').textContent='Unavailable'}}
 document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();render()});
 const q=new URLSearchParams(location.search).get('universe');
 if(FILTERS.some(x=>x.key===String(q||'').toUpperCase()))selected=String(q).toUpperCase();

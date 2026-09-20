@@ -1,734 +1,2182 @@
 from flask import Flask, render_template_string, request
-import io
-import json
-from pathlib import Path
-
 import pandas as pd
+import io
 import requests
+from pathlib import Path
 
 app = Flask(__name__)
 
-BASE = "https://raw.githubusercontent.com/adesh-dhandre/fibedge786/master/"
-SIGNALS_URL = BASE + "FIBEDGE_LATEST_SIGNALS.csv"
-OPP_URL = BASE + "FIBEDGE_BEST_OPPORTUNITIES_V3.csv"
-MAP_URL = BASE + "STOCK_UNIVERSE_MAPPING.csv"
-PREMIUM_PLUS_URL = BASE + "netlify_site/premium_plus_candidates.json"
+GITHUB_OPPORTUNITY_URL = (
+    "https://raw.githubusercontent.com/"
+    "adesh-dhandre/fibedge786/master/"
+    "FIBEDGE_BEST_OPPORTUNITIES_V3.csv"
+)
 
-FILTERS = [
-    ("ALL", "All"),
-    ("NIFTY50", "NIFTY 50"),
-    ("FNO", "F&O"),
-    ("SMALLCAP250", "Smallcap 250"),
-    ("MICROCAP250", "Microcap 250"),
-]
+GITHUB_CSV_URL = (
+    "https://raw.githubusercontent.com/"
+    "adesh-dhandre/fibedge786/master/"
+    "FIBEDGE_LATEST_SIGNALS.csv"
+)
 
-MODES = {
-    "CLASSIC": {
-        "num": "01",
-        "name": "Classic FibEdge",
-        "rate": "30.44%",
-        "rate_label": "Historical win rate",
-        "summary": "Broadest 0.786 scanner for valid Fibonacci structures.",
-    },
-    "CLEAN": {
-        "num": "02",
-        "name": "Clean Swings",
-        "rate": "42.52%",
-        "rate_label": "Historical win rate",
-        "summary": "Major high-to-low swings with cleaner recovery structure.",
-    },
-    "PREMIUM": {
-        "num": "03",
-        "name": "Premium Clean",
-        "rate": "56.36%",
-        "rate_label": "Resolved historical win rate",
-        "summary": "Selective big-swing recovery tier.",
-    },
-    "PREMIUMPLUS": {
-        "num": "04",
-        "name": "Premium+ V1",
-        "rate": "76.97%",
-        "rate_label": "Historical win rate",
-        "summary": "Rare behavior-confirmed setup after the daily candle closes.",
-    },
-}
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0",
-    "Cache-Control": "no-cache",
-}
-
-def fetch_text(url, timeout=8):
-    r = requests.get(url, headers=HEADERS, timeout=timeout)
-    r.raise_for_status()
-    return r.text.lstrip("\ufeff")
-
-def load_csv_source(local_name, remote_url):
-    local = Path(local_name)
-    if local.exists():
-        return pd.read_csv(local)
-    return pd.read_csv(io.StringIO(fetch_text(remote_url)))
-
-def load_json_source(local_name, remote_url):
-    local = Path(local_name)
-    try:
-        if local.exists():
-            return json.loads(local.read_text(encoding="utf-8"))
-        return json.loads(fetch_text(remote_url))
-    except Exception:
-        return {"candidates": []}
-
-def norm_symbol(value):
-    return str(value or "").replace(".NS", "").strip().upper()
-
-def safe_float(value):
-    try:
-        x = float(value)
-        return x if pd.notna(x) else None
-    except Exception:
-        return None
-
-def fmt_num(value, digits=2):
-    x = safe_float(value)
-    return f"{x:.{digits}f}" if x is not None else "-"
-
-def fmt_pct(value, digits=2, plus=False):
-    x = safe_float(value)
-    if x is None:
-        return "-"
-    prefix = "+" if plus and x > 0 else ""
-    return f"{prefix}{x:.{digits}f}%"
-
-def days_between(a, b):
-    try:
-        x = pd.to_datetime(a, errors="coerce")
-        y = pd.to_datetime(b, errors="coerce")
-        if pd.isna(x) or pd.isna(y):
-            return None
-        return int((y - x).days)
-    except Exception:
-        return None
-
-def load_mapping():
-    try:
-        m = load_csv_source("STOCK_UNIVERSE_MAPPING.csv", MAP_URL)
-        if "SYMBOL" in m.columns:
-            m["SYMBOL"] = m["SYMBOL"].astype(str).str.strip().str.upper()
-        return m
-    except Exception:
-        return pd.DataFrame()
-
-def apply_universe(df, universe, mapping, symbol_col="Symbol"):
-    if df is None or df.empty or universe == "ALL":
-        return df.copy()
-    if mapping.empty or universe not in mapping.columns:
-        return df.copy()
-    allowed = set(
-        mapping.loc[
-            mapping[universe].astype(str).str.upper().eq("YES"),
-            "SYMBOL"
-        ]
-    )
-    out = df.copy()
-    out["_SYMBOL"] = out[symbol_col].map(norm_symbol)
-    out = out[out["_SYMBOL"].isin(allowed)].copy()
-    out.drop(columns=["_SYMBOL"], inplace=True, errors="ignore")
-    return out
-
-def add_structure_metrics(df):
-    out = df.copy()
-    if out.empty:
-        out["_decline"] = []
-        out["_swing"] = []
-        return out
-
-    def decline(row):
-        h = safe_float(row.get("High"))
-        l = safe_float(row.get("Low"))
-        if h is None or l is None or h <= 0:
-            return None
-        return (h - l) / h * 100
-
-    out["_decline"] = out.apply(decline, axis=1)
-    out["_swing"] = out.apply(
-        lambda r: days_between(r.get("High Date"), r.get("Low Date")),
-        axis=1,
-    )
-    return out
-
-def make_quality_map(opp):
-    if opp is None or opp.empty or "Symbol" not in opp.columns:
-        return {}
-    q = {}
-    for _, row in opp.iterrows():
-        symbol = norm_symbol(row.get("Symbol"))
-        score = (
-            safe_float(row.get("Opportunity Score V3"))
-            or safe_float(row.get("Quality Score"))
-            or 0.0
-        )
-        q[symbol] = {
-            "score": score,
-            "grade": str(row.get("Live Grade", row.get("Grade", "-"))),
-            "opp": str(row.get("Opportunity", "-")),
-        }
-    return q
-
-def row_to_card(row, quality=None, premium=False):
-    symbol = norm_symbol(row.get("Symbol"))
-    decline = row.get("_decline")
-    swing = row.get("_swing")
-    recovery = row.get("Recovery Efficiency", None)
-
-    card = {
-        "symbol": symbol,
-        "price": fmt_num(row.get("Price")),
-        "entry": fmt_num(row.get("Entry")),
-        "stop": fmt_num(row.get("SL")),
-        "target": fmt_num(row.get("Target")),
-        "distance": fmt_pct(row.get("Distance %")),
-        "decline": f"{float(decline):.1f}%" if decline is not None and pd.notna(decline) else "-",
-        "swing": f"{int(swing)}d" if swing is not None and pd.notna(swing) else "-",
-        "status": str(row.get("Status", "-")),
-        "quality": quality or {},
-        "recovery": fmt_num(recovery) if premium and recovery is not None and pd.notna(recovery) else None,
-    }
-    return card
-
-def cards_from_df(df, quality_map=None, premium=False):
-    quality_map = quality_map or {}
-    return [
-        row_to_card(row, quality_map.get(norm_symbol(row.get("Symbol"))), premium=premium)
-        for _, row in df.iterrows()
-    ]
-
-def abs_distance_sort(df):
-    if df.empty:
-        return df
-    out = df.copy()
-    out["_absdist"] = pd.to_numeric(out.get("Distance %"), errors="coerce").abs()
-    out = out.sort_values("_absdist", na_position="last")
-    return out.drop(columns=["_absdist"], errors="ignore")
-
-def distance_sort(df):
-    if df.empty:
-        return df
-    out = df.copy()
-    out["_dist"] = pd.to_numeric(out.get("Distance %"), errors="coerce")
-    out = out.sort_values("_dist", na_position="last")
-    return out.drop(columns=["_dist"], errors="ignore")
-
-def build_classic(signals, opp):
-    s = add_structure_metrics(signals)
-    current = s[s["Status"].isin(["OPEN", "ENTRY AREA", "NEAR 0.786"])].copy()
-
-    open_df = abs_distance_sort(current[current["Status"].isin(["OPEN", "ENTRY AREA"])].copy())
-    near_df = distance_sort(current[current["Status"].eq("NEAR 0.786")].copy())
-
-    qmap = make_quality_map(opp)
-    best = current.copy()
-    if not best.empty:
-        best["_quality"] = best["Symbol"].map(
-            lambda v: qmap.get(norm_symbol(v), {}).get("score", 0.0)
-        )
-        best["_absdist"] = pd.to_numeric(best.get("Distance %"), errors="coerce").abs()
-        best = best.sort_values(
-            ["_quality", "_absdist"],
-            ascending=[False, True],
-            na_position="last",
-        ).drop(columns=["_quality", "_absdist"], errors="ignore").head(9)
-
-    return {
-        "best": cards_from_df(best, qmap),
-        "open": cards_from_df(open_df, qmap),
-        "near": cards_from_df(near_df, qmap),
-        "note": "Broad live 0.786 structures. Best Setups prioritizes current quality and distance.",
-    }
-
-def build_clean(signals, opp, premium=False):
-    s = add_structure_metrics(signals)
-    current = s[s["Status"].isin(["OPEN", "ENTRY AREA", "NEAR 0.786"])].copy()
-
-    clean = current[
-        pd.to_numeric(current["_decline"], errors="coerce").ge(20)
-        & pd.to_numeric(current["_swing"], errors="coerce").ge(40)
-    ].copy()
-
-    qmap = make_quality_map(opp)
-
-    open_df = abs_distance_sort(clean[clean["Status"].isin(["OPEN", "ENTRY AREA"])].copy())
-    near_df = distance_sort(clean[clean["Status"].eq("NEAR 0.786")].copy())
-
-    best = clean.copy()
-    if not best.empty:
-        best["_quality"] = best["Symbol"].map(
-            lambda v: qmap.get(norm_symbol(v), {}).get("score", 0.0)
-        )
-        best["_absdist"] = pd.to_numeric(best.get("Distance %"), errors="coerce").abs()
-        if premium:
-            best = best.sort_values(
-                ["_quality", "_absdist"],
-                ascending=[False, True],
-                na_position="last",
-            )
-        else:
-            best = best.sort_values(
-                ["_absdist", "_quality"],
-                ascending=[True, False],
-                na_position="last",
-            )
-        best = best.drop(columns=["_quality", "_absdist"], errors="ignore").head(9)
-
-    note = (
-        "Current clean-swing candidates filtered to 20%+ decline and 40+ swing days."
-        if not premium
-        else "Premium Clean historical result is 56.36% resolved. Live cards use the current structured candidate feed; Recovery Efficiency is shown only when that field is present."
-    )
-
-    return {
-        "best": cards_from_df(best, qmap, premium=premium),
-        "open": cards_from_df(open_df, qmap, premium=premium),
-        "near": cards_from_df(near_df, qmap, premium=premium),
-        "note": note,
-    }
-
-def build_premium_plus(payload, universe, mapping):
-    rows = payload.get("candidates", []) if isinstance(payload, dict) else []
-    allowed = None
-    if universe != "ALL" and not mapping.empty and universe in mapping.columns:
-        allowed = set(
-            mapping.loc[
-                mapping[universe].astype(str).str.upper().eq("YES"),
-                "SYMBOL"
-            ]
-        )
-
-    cards = []
-    for row in rows:
-        symbol = norm_symbol(row.get("symbol"))
-        if allowed is not None and symbol not in allowed:
-            continue
-        cards.append({
-            "symbol": symbol,
-            "price": fmt_num(row.get("close")),
-            "entry": fmt_num(row.get("fib_0786")),
-            "stop": fmt_num(row.get("sl")),
-            "target": fmt_num(row.get("target")),
-            "distance": "-",
-            "decline": fmt_pct(row.get("decline_pct")),
-            "swing": f"{row.get('swing_days', '-')}d",
-            "status": "CONFIRMED",
-            "lower_wick": fmt_pct(row.get("lower_wick_pct")),
-            "compression": fmt_num(row.get("compression_3v10")),
-            "close_above": fmt_pct(row.get("close_vs_786_pct"), plus=True),
-        })
-
-    return {
-        "best": cards,
-        "open": [],
-        "near": [],
-        "note": "Frozen V1 behavior confirmation. Candidates appear only after a completed daily candle.",
-    }
-
-HTML = r"""<!doctype html>
+HTML = """
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="600">
-<title>FibEdge 786</title>
-<style>
-*{box-sizing:border-box}
-:root{
-  --bg:#06101b;
-  --panel:#0a1928;
-  --panel2:#0d1f31;
-  --border:#1c3a54;
-  --blue:#58bfff;
-  --blue2:#88d2ff;
-  --green:#4ce0a5;
-  --gold:#e9bd58;
-  --text:#eef7ff;
-  --muted:#7891aa;
-}
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-  background:
-    radial-gradient(circle at 82% 0%,rgba(61,132,205,.09),transparent 28%),
-    linear-gradient(180deg,#071320,#050c15);
-  color:var(--text);
-}
-a{text-decoration:none;color:inherit}
-.nav{
-  position:sticky;top:0;z-index:100;
-  background:rgba(5,15,26,.96);
-  border-bottom:1px solid #17324a;
-  backdrop-filter:blur(14px);
-}
-.navin,.page{max-width:1450px;margin:auto}
-.navin{padding:15px 22px;display:flex;justify-content:space-between;align-items:center}
-.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:900}
-.brandmark{
-  width:35px;height:35px;border-radius:10px;display:grid;place-items:center;
-  background:#123c32;border:1px solid #266f5b;color:#63e8b0
-}
-.brand b{color:#43bfff}
-.navmeta{text-align:right;color:#7189a0;font-size:10px;line-height:1.45}
-.navmeta strong{color:#69e4b8}
-.page{padding:26px 22px 55px}
-.guide{
-  padding:18px;
-  background:#081725;
-  border:1px solid #193850;
-  border-radius:16px;
-  margin-bottom:18px;
-}
-.guide-title{font-size:15px;font-weight:900;margin-bottom:12px}
-.guide-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
-.guide-item{padding:11px 12px;background:#091b2b;border:1px solid #173650;border-radius:10px}
-.guide-item b{font-size:10px}.guide-item b span{color:var(--blue);margin-right:4px}
-.guide-item p{margin:5px 0 0;color:var(--muted);font-size:8px;line-height:1.45}
-.guide-item.gold{border-color:rgba(233,189,88,.38)}.guide-item.gold b span{color:var(--gold)}
-.status-guide{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
-.status-guide span{font-size:8px;color:#7891aa;padding:6px 9px;border:1px solid #18364f;border-radius:999px;background:#071521}
-.status-guide b{color:#dfefff}
-.modes{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:12px;
-  padding:9px;
-  border:1px solid #19384f;
-  border-radius:16px;
-  background:#071521;
-  margin-bottom:18px;
-}
-.mode{
-  min-height:130px;
-  padding:17px;
-  border:1px solid #21415d;
-  border-radius:13px;
-  background:linear-gradient(145deg,#0e2235,#091725);
-  transition:.16s ease;
-}
-.mode:hover{transform:translateY(-2px);border-color:#3f8fca}
-.mode.on{border-color:#56bfff;background:linear-gradient(145deg,#113252,#0a1d2f)}
-.mode.gold{border-color:rgba(233,189,88,.42)}
-.mode.gold.on{border-color:var(--gold);background:linear-gradient(145deg,#282317,#101b27)}
-.mode .num{font-size:9px;font-weight:900;color:var(--blue)}
-.mode.gold .num,.mode.gold .rate{color:var(--gold)}
-.mode .name{display:block;font-size:15px;font-weight:850;margin-top:6px}
-.mode .rate{display:block;font-size:27px;font-weight:900;color:var(--blue);margin-top:13px}
-.mode .rate-label{display:block;font-size:7px;color:#6f899f;text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
-.filters{display:flex;gap:7px;flex-wrap:wrap;padding:9px;background:#081726;border:1px solid #193750;border-radius:14px;margin-bottom:18px}
-.chip{padding:8px 12px;border-radius:999px;background:#0c1d2e;border:1px solid #24435d;color:#90a8bd;font-size:9px;font-weight:800}
-.chip.on{background:#1782c1;border-color:#48baff;color:#fff}
-.fresh{
-  display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;
-  padding:11px 13px;border:1px solid #1b3a54;border-radius:12px;
-  background:#081726;color:#8da3b7;font-size:9px;margin-bottom:18px
-}
-.fresh b{color:#68ddba}
-.mode-summary{
-  display:flex;justify-content:space-between;align-items:flex-start;gap:15px;
-  padding:16px 18px;background:#081726;border:1px solid #1b3a54;border-radius:14px;margin-bottom:20px
-}
-.mode-summary h2{margin:0;font-size:22px}.mode-summary p{margin:5px 0 0;color:#7891aa;font-size:9px;line-height:1.5}
-.mode-pill{font-size:8px;font-weight:900;padding:7px 10px;border:1px solid #28506d;border-radius:999px;color:#85cbf6;white-space:nowrap}
-.mode-pill.gold{border-color:rgba(233,189,88,.45);color:var(--gold)}
-.section{
-  margin-bottom:24px;
-  padding:16px;
-  background:#081726;
-  border:1px solid #1a3952;
-  border-radius:15px
-}
-.section.best{border-top:2px solid #53b8f1}
-.section.open{border-top:2px solid #43daa2}
-.section.near{border-top:2px solid #e3b656}
-.section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:13px}
-.section-title{font-size:19px;font-weight:900}
-.section-desc{font-size:9px;color:#748da3;margin-top:4px}
-.count{font-size:8px;color:#a8bdd0;padding:5px 8px;border:1px solid #29465f;border-radius:999px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
-.card{
-  background:linear-gradient(150deg,#0d2032,#091624);
-  border:1px solid #1d3d59;
-  border-radius:13px;
-  overflow:hidden;
-  transition:.16s ease
-}
-.card:hover{transform:translateY(-2px);border-color:#3d92cb}
-.card-top{display:flex;justify-content:space-between;gap:10px;padding:14px;border-bottom:1px solid #183650}
-.symbol{font-size:16px;font-weight:900}
-.badge{font-size:7px;color:#57bdf4;text-transform:uppercase;letter-spacing:.08em;margin-top:3px;font-weight:850}
-.badge.gold{color:var(--gold)}
-.price{font-size:20px;font-weight:900;white-space:nowrap}
-.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:13px}
-.metric{background:#071522;border:1px solid #18344c;border-radius:8px;padding:8px}
-.metric span{display:block;color:#6f899f;font-size:7px;text-transform:uppercase;letter-spacing:.05em}
-.metric b{display:block;color:#dcecff;font-size:10px;margin-top:4px}
-.metric.special{border-color:rgba(88,191,255,.34)}
-.metric.gold{border-color:rgba(233,189,88,.38)}
-.empty{text-align:center;padding:28px 16px;border:1px dashed #29475f;border-radius:11px;color:#748da4;font-size:10px;line-height:1.55}
-.foot{text-align:center;margin-top:35px;padding-top:20px;border-top:1px solid #173048;color:#587188;font-size:8px}
-.error{padding:16px;border:1px solid #704348;background:#2a171c;border-radius:12px;color:#ffc6cb;font-size:10px}
-.loadmore{text-align:center;margin-top:14px}
-.loadmore a{display:inline-block;padding:9px 14px;border-radius:9px;border:1px solid #28506d;background:#0d2234;color:#9ed8ff;font-size:9px;font-weight:850;transition:.16s ease}
-.loadmore a:hover{border-color:#4aa9df;background:#12304a;color:#fff}
-@media(max-width:980px){.modes,.guide-grid{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:620px){
-  .navin,.page{padding-left:12px;padding-right:12px}
-  .modes{grid-template-columns:1fr 1fr;gap:8px}
-  .mode{min-height:115px;padding:13px}
-  .mode .rate{font-size:23px}
-  .guide-grid,.grid{grid-template-columns:1fr}
-  .metrics{grid-template-columns:repeat(2,1fr)}
-  .mode-summary{flex-direction:column}
-}
-</style>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>FibEdge 786</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #06101d 0%,
+                    #081421 100%
+                );
+
+            color: #edf3fb;
+        }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+
+            background:
+                rgba(8, 20, 33, 0.96);
+
+            backdrop-filter:
+                blur(12px);
+
+            border-bottom:
+                1px solid #1a2b40;
+        }
+
+        .navbar-inner {
+            max-width: 1450px;
+
+            margin: auto;
+
+            padding:
+                16px 24px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content:
+                space-between;
+
+            gap: 20px;
+        }
+
+        .brand {
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+
+            border-radius: 10px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #20d47b,
+                    #00a866
+                );
+
+            color: #04140c;
+
+            font-weight: 900;
+
+            font-size: 18px;
+        }
+
+        .brand-text {
+            font-size: 21px;
+
+            font-weight: 800;
+
+            letter-spacing:
+                0.5px;
+        }
+
+        .brand-text span {
+            color: #20d47b;
+        }
+
+        .nav-note {
+            color: #8ea2b9;
+
+            font-size: 12px;
+        }
+
+        .page {
+            max-width: 1450px;
+
+            margin: auto;
+
+            padding:
+                28px 24px 55px;
+        }
+
+        .hero h1 {
+            margin: 0;
+
+            font-size:
+                clamp(
+                    28px,
+                    4vw,
+                    42px
+                );
+
+            line-height: 1.05;
+        }
+
+        .hero p {
+            color: #8193aa;
+
+            margin-top: 10px;
+
+            font-size: 14px;
+        }
+
+        .strategy-chip {
+            margin-top: 15px;
+
+            display:
+                inline-flex;
+
+            flex-wrap: wrap;
+
+            gap: 8px;
+
+            background:
+                #0d1c2e;
+
+            border:
+                1px solid #1d3148;
+
+            padding:
+                9px 12px;
+
+            border-radius: 10px;
+
+            color: #9dafc5;
+
+            font-size: 12px;
+        }
+
+        .strategy-chip strong {
+            color: #d9e5f2;
+        }
+
+        .freshness {
+            margin-top: 24px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(24,109,75,0.16),
+                    rgba(20,39,58,0.45)
+                );
+
+            border:
+                1px solid #1f5b43;
+
+            border-radius: 12px;
+
+            padding:
+                13px 16px;
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items: center;
+
+            gap: 16px;
+
+            font-size: 13px;
+        }
+
+        .fresh-value {
+            color: #20d47b;
+
+            font-weight: 700;
+        }
+
+        .delay-note {
+            color: #7f91a8;
+
+            text-align: right;
+        }
+
+        .stats-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    4,
+                    minmax(180px, 1fr)
+                );
+
+            gap: 14px;
+
+            margin:
+                26px 0 32px;
+        }
+
+        .stat-card {
+            background:
+                linear-gradient(
+                    180deg,
+                    #0d1b2c,
+                    #0a1726
+                );
+
+            border:
+                1px solid #1b2d43;
+
+            border-radius: 14px;
+
+            padding: 19px;
+        }
+
+        .stat-label {
+            color: #788ba2;
+
+            font-size: 11px;
+
+            letter-spacing: 0.8px;
+
+            text-transform:
+                uppercase;
+        }
+
+        .stat-number {
+            margin-top: 7px;
+
+            font-size: 29px;
+
+            font-weight: 800;
+        }
+
+        .stat-sub {
+            margin-top: 6px;
+
+            color: #62758d;
+
+            font-size: 11px;
+        }
+
+        .green {
+            color: #20d47b;
+        }
+
+        .yellow {
+            color: #f2c45e;
+        }
+
+        .blue {
+            color: #62a8ff;
+        }
+
+        .search-panel {
+            background:
+                #0b1828;
+
+            border:
+                1px solid #1a2c42;
+
+            border-radius: 13px;
+
+            padding: 16px;
+
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            display: flex;
+
+            gap: 10px;
+        }
+
+        .search-form input {
+            flex: 1;
+
+            background:
+                #07121f;
+
+            border:
+                1px solid #26394f;
+
+            border-radius: 9px;
+
+            padding:
+                13px 14px;
+
+            color: white;
+
+            font-size: 14px;
+
+            outline: none;
+        }
+
+        .search-form button {
+            border: 0;
+
+            border-radius: 9px;
+
+            padding:
+                12px 20px;
+
+            background:
+                #1a2c42;
+
+            color: #edf4fc;
+
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+        .section {
+            margin-bottom: 36px;
+        }
+
+        .section-head {
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items:
+                flex-end;
+
+            gap: 15px;
+
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 20px;
+
+            font-weight: 800;
+        }
+
+        .section-desc {
+            color: #70839a;
+
+            font-size: 12px;
+
+            margin-top: 4px;
+        }
+
+        .count-pill {
+            background:
+                #0e1d2f;
+
+            border:
+                1px solid #21364f;
+
+            color: #9dafc5;
+
+            border-radius: 20px;
+
+            padding:
+                6px 10px;
+
+            font-size: 11px;
+        }
+
+        .signal-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    3,
+                    minmax(0, 1fr)
+                );
+
+            gap: 14px;
+        }
+
+        .signal-card {
+            background:
+                linear-gradient(
+                    180deg,
+                    #0d1b2c,
+                    #091625
+                );
+
+            border:
+                1px solid #1b2d43;
+
+            border-radius: 14px;
+
+            overflow: hidden;
+        }
+
+        .signal-top {
+            padding:
+                15px 16px;
+
+            border-bottom:
+                1px solid #18283b;
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items: center;
+        }
+
+        .symbol {
+            font-size: 18px;
+
+            font-weight: 800;
+        }
+
+        .badge {
+            border-radius: 20px;
+
+            padding:
+                6px 9px;
+
+            font-size: 10px;
+
+            font-weight: 800;
+        }
+
+        .badge-open {
+            background:
+                rgba(32,212,123,0.14);
+
+            color: #20d47b;
+        }
+
+        .badge-near {
+            background:
+                rgba(242,196,94,0.14);
+
+            color: #f2c45e;
+        }
+
+        .signal-body {
+            padding: 16px;
+        }
+
+        .current-label {
+            color: #708299;
+
+            font-size: 11px;
+
+            text-transform:
+                uppercase;
+        }
+
+        .current-price {
+            margin-top: 4px;
+
+            font-size: 27px;
+
+            font-weight: 800;
+        }
+
+        .price-time {
+            margin-top: 4px;
+
+            color: #687b92;
+
+            font-size: 10px;
+        }
+
+        .levels {
+            margin-top: 17px;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 8px;
+        }
+
+        .level {
+            background:
+                #0d1d30;
+
+            border-radius: 9px;
+
+            padding: 10px;
+        }
+
+        .level-name {
+            color: #6f829a;
+
+            font-size: 9px;
+
+            text-transform:
+                uppercase;
+        }
+
+        .level-value {
+            margin-top: 4px;
+
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+        .entry-value {
+            color: #62a8ff;
+        }
+
+        .sl-value {
+            color: #ff7480;
+        }
+
+        .target-value {
+            color: #27d883;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+
+            background:
+                #0b1828;
+
+            border:
+                1px solid #1a2d43;
+
+            border-radius: 13px;
+        }
+
+        table {
+            width: 100%;
+
+            border-collapse:
+                collapse;
+
+            min-width: 1000px;
+        }
+
+        th {
+            text-align: left;
+
+            padding:
+                13px 14px;
+
+            color: #76899f;
+
+            font-size: 10px;
+
+            text-transform:
+                uppercase;
+
+            border-bottom:
+                1px solid #22354b;
+
+            background:
+                #0c1a2a;
+        }
+
+        td {
+            padding:
+                13px 14px;
+
+            border-bottom:
+                1px solid #152538;
+
+            font-size: 12px;
+        }
+
+        tr:hover {
+            background:
+                #102139;
+        }
+
+        .empty {
+            background:
+                #0b1828;
+
+            border:
+                1px dashed #294057;
+
+            border-radius: 12px;
+
+            color: #6f8197;
+
+            padding: 26px;
+
+            text-align: center;
+        }
+
+        .footer {
+            margin-top: 45px;
+
+            border-top:
+                1px solid #17283a;
+
+            padding-top: 25px;
+
+            text-align: center;
+
+            color: #5c7188;
+
+            font-size: 11px;
+
+            line-height: 1.7;
+        }
+
+
+        .quality-zone {
+            margin: 30px 0 42px;
+            padding: 22px;
+            background: linear-gradient(180deg, rgba(18,41,61,.92), rgba(8,22,37,.96));
+            border: 1px solid #29445f;
+            border-radius: 16px;
+        }
+
+        .quality-zone-title {
+            font-size: 23px;
+            font-weight: 850;
+        }
+
+        .quality-zone-desc {
+            color: #8296ad;
+            font-size: 12px;
+            margin: 6px 0 20px;
+            line-height: 1.6;
+        }
+
+        .quality-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .quality-summary-card {
+            background: #091828;
+            border: 1px solid #203951;
+            border-radius: 11px;
+            padding: 14px;
+        }
+
+        .quality-summary-label {
+            color: #71859c;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+        }
+
+        .quality-summary-number {
+            margin-top: 5px;
+            font-size: 24px;
+            font-weight: 850;
+        }
+
+        .quality-card {
+            background: linear-gradient(180deg, #102238, #0b192a);
+            border: 1px solid #29445d;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .quality-card-head {
+            padding: 15px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border-bottom: 1px solid #20364c;
+        }
+
+        .quality-badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .q-badge {
+            padding: 5px 8px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: 850;
+        }
+
+        .q-strong {
+            color: #20d47b;
+            background: rgba(32,212,123,.13);
+        }
+
+        .q-grade {
+            color: #f2c45e;
+            background: rgba(242,196,94,.13);
+        }
+
+        .q-speed {
+            color: #b7c9dc;
+            background: #172a3f;
+        }
+
+        .quality-body {
+            padding: 16px;
+        }
+
+        .quality-price-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .quality-price {
+            font-size: 25px;
+            font-weight: 850;
+        }
+
+        .quality-state {
+            color: #9bb0c6;
+            font-size: 11px;
+            text-align: right;
+        }
+
+        .quality-metrics {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .quality-metric {
+            background: #0b1b2d;
+            border-radius: 9px;
+            padding: 10px;
+        }
+
+        .quality-metric-label {
+            color: #657a91;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+
+        .quality-metric-value {
+            margin-top: 4px;
+            font-size: 13px;
+            font-weight: 750;
+        }
+
+        .quality-divider {
+            margin: 26px 0 16px;
+            border-top: 1px solid #20364c;
+        }
+
+        .quality-subtitle {
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        @media(max-width: 1050px) {
+
+            .stats-grid {
+                grid-template-columns:
+                    repeat(2,1fr);
+            }
+
+            .signal-grid {
+                grid-template-columns:
+                    repeat(2,1fr);
+            }
+        }
+
+        @media(max-width: 700px) {
+
+            .navbar-inner {
+                padding:
+                    13px 15px;
+            }
+
+            .nav-note {
+                display: none;
+            }
+
+            .page {
+                padding:
+                    20px 14px 40px;
+            }
+
+            .stats-grid {
+                grid-template-columns:
+                    repeat(2,1fr);
+
+                gap: 9px;
+            }
+
+            .signal-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .search-form {
+                flex-direction:
+                    column;
+            }
+
+            .quality-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .quality-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .freshness {
+                display: block;
+            }
+
+            .delay-note {
+                text-align: left;
+
+                margin-top: 7px;
+            }
+        }
+
+    </style>
 </head>
+
 <body>
-<div class="nav">
-  <div class="navin">
-    <div class="brand"><div class="brandmark">F</div><span>FibEdge <b>786</b></span></div>
-    <div class="navmeta">NSE setup intelligence<br><strong>Server-rendered live dashboard</strong></div>
-  </div>
+
+<div class="navbar">
+    <div class="navbar-inner">
+
+        <div class="brand">
+            <div class="brand-icon">786</div>
+
+            <div class="brand-text">
+                FibEdge <span>786</span>
+            </div>
+        </div>
+
+        <div class="nav-note">
+            Auto-updated NSE Signal Dashboard
+        </div>
+
+    </div>
 </div>
 
-<main class="page">
+<div class="page">
 
-  <section class="guide">
-    <div class="guide-title">How to read FibEdge</div>
-    <div class="guide-grid">
-      {% for key, item in modes.items() %}
-      <div class="guide-item {% if key=='PREMIUMPLUS' %}gold{% endif %}">
-        <b><span>{{ item.num }}</span> {{ item.name }}</b>
-        <p>{{ item.summary }}</p>
-      </div>
-      {% endfor %}
+    <div class="hero">
+
+        <h1>
+            NSE Fibonacci Signal Dashboard
+        </h1>
+
+        <p>
+            Latest automatically published FibEdge signals
+            across the NSE equity universe.
+        </p>
+
+        <div class="strategy-chip">
+
+            <span>
+                Decline:
+                <strong>8%+</strong>
+            </span>
+
+            <span>•</span>
+
+            <span>
+                Swing:
+                <strong>15+ days</strong>
+            </span>
+
+            <span>•</span>
+
+            <span>
+                Entry:
+                <strong>0.786</strong>
+            </span>
+
+            <span>•</span>
+
+            <span>
+                SL:
+                <strong>0.500</strong>
+            </span>
+
+            <span>•</span>
+
+            <span>
+                Target:
+                <strong>1.260</strong>
+            </span>
+
+        </div>
+
     </div>
-    <div class="status-guide">
-      <span><b>Best Setups</b> highest-priority stocks</span>
-      <span><b>Open Now</b> entry already triggered</span>
-      <span><b>Near Structure</b> approaching 0.786</span>
+
+    <div class="freshness">
+
+        <div>
+            Latest market timestamp:
+
+            <span class="fresh-value">
+                {{ latest_timestamp }}
+            </span>
+        </div>
+
+        <div class="delay-note">
+            Auto-updated via GitHub Actions • Yahoo Finance may be delayed
+        </div>
+
     </div>
-  </section>
 
-  <section class="modes">
-    {% for key, item in modes.items() %}
-    <a class="mode {% if mode==key %}on{% endif %} {% if key=='PREMIUMPLUS' %}gold{% endif %}"
-       href="/?mode={{ key }}&universe={{ universe }}">
-      <span class="num">{{ item.num }}</span>
-      <span class="name">{{ item.name }}</span>
-      <span class="rate">{{ item.rate }}</span>
-      <span class="rate-label">{{ item.rate_label }}</span>
-    </a>
-    {% endfor %}
-  </section>
+    <div class="stats-grid">
 
-  <div class="filters">
-    {% for key, label in filters %}
-      <a class="chip {% if universe==key %}on{% endif %}"
-         href="/?mode={{ mode }}&universe={{ key }}">{{ label }}</a>
-    {% endfor %}
-  </div>
+        <div class="stat-card">
+            <div class="stat-label">Stocks Scanned</div>
+            <div class="stat-number">{{ total_count }}</div>
+            <div class="stat-sub">Latest automated update</div>
+        </div>
 
-  <div class="fresh">
-    <span>Latest timestamp: <b>{{ latest }}</b></span>
-    <span>Universe: <b>{{ universe_label }}</b></span>
-  </div>
+        <div class="stat-card">
+            <div class="stat-label">Open Signals</div>
+            <div class="stat-number green">{{ open_count }}</div>
+            <div class="stat-sub">0.786 triggered</div>
+        </div>
 
-  <section class="mode-summary">
-    <div>
-      <h2>{{ modes[mode].name }}</h2>
-      <p>{{ data.note }}</p>
+        <div class="stat-card">
+            <div class="stat-label">Near 0.786</div>
+            <div class="stat-number yellow">{{ near_count }}</div>
+            <div class="stat-sub">Within 2% of entry</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Waiting</div>
+            <div class="stat-number blue">{{ waiting_count }}</div>
+            <div class="stat-sub">Active structures</div>
+        </div>
+
     </div>
-    <div class="mode-pill {% if mode=='PREMIUMPLUS' %}gold{% endif %}">
-      {{ modes[mode].rate }} HISTORICAL
-    </div>
-  </section>
 
-  {% macro card(c, premium_plus=False) -%}
-  <div class="card">
-    <div class="card-top">
-      <div>
-        <div class="symbol">{{ c.symbol }}</div>
-        <div class="badge {% if premium_plus %}gold{% endif %}">{{ c.status }}</div>
-      </div>
-      <div class="price">₹{{ c.price }}</div>
-    </div>
-    <div class="metrics">
-      <div class="metric"><span>Entry</span><b>₹{{ c.entry }}</b></div>
-      <div class="metric"><span>Stop</span><b>₹{{ c.stop }}</b></div>
-      <div class="metric"><span>Target</span><b>₹{{ c.target }}</b></div>
-      <div class="metric"><span>Distance</span><b>{{ c.distance }}</b></div>
-      <div class="metric"><span>Decline</span><b>{{ c.decline }}</b></div>
-      <div class="metric"><span>Swing</span><b>{{ c.swing }}</b></div>
+    <div class="search-panel">
 
-      {% if c.recovery %}
-      <div class="metric special"><span>Recovery Eff.</span><b>{{ c.recovery }}</b></div>
-      {% endif %}
+        <form
+            class="search-form"
+            method="GET"
+        >
+            <input
+                type="text"
+                name="q"
+                value="{{ search }}"
+                placeholder="Search HCG, BHEL, RELIANCE, HEG..."
+            >
 
-      {% if premium_plus %}
-      <div class="metric gold"><span>Lower Wick</span><b>{{ c.lower_wick }}</b></div>
-      <div class="metric gold"><span>Compression</span><b>{{ c.compression }}</b></div>
-      <div class="metric gold"><span>Close above 0.786</span><b>{{ c.close_above }}</b></div>
-      {% endif %}
-    </div>
-  </div>
-  {%- endmacro %}
+            <button type="submit">
+                Search
+            </button>
+        </form>
 
-  <section class="section best" id="best">
-    <div class="section-head">
-      <div><div class="section-title">Best Setups</div><div class="section-desc">Highest-priority stocks from the selected strategy.</div></div>
-      <div class="count">{{ [data.best|length, best_limit]|min }} / {{ data.best|length }}</div>
     </div>
-    {% if data.best %}
-      <div class="grid">
-      {% for c in data.best[:best_limit] %}
-        {{ card(c, mode=='PREMIUMPLUS') }}
-      {% endfor %}
-      </div>
-      {% if data.best|length > best_limit %}
-      <div class="loadmore">
-        <a href="/?mode={{ mode }}&universe={{ universe }}&best_limit={{ best_limit+9 }}&open_limit={{ open_limit }}&near_limit={{ near_limit }}#best">Load 9 more</a>
-      </div>
-      {% endif %}
-    {% else %}
-      <div class="empty">
-        {% if mode=='PREMIUMPLUS' %}
-          <b>No Premium+ setup today.</b><br>Waiting for the frozen V1 conditions after a completed daily candle.
+
+    {% if search %}
+
+    <div class="section">
+
+        <div class="section-head">
+
+            <div>
+                <div class="section-title">
+                    Search Results
+                </div>
+
+                <div class="section-desc">
+                    {{ search }}
+                </div>
+            </div>
+
+            <div class="count-pill">
+                {{ search_rows|length }}
+            </div>
+
+        </div>
+
+        {% if search_rows %}
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Entry</th>
+                        <th>SL</th>
+                        <th>Target</th>
+                        <th>Distance</th>
+                        <th>Price Time</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for row in search_rows %}
+
+                    <tr>
+                        <td>
+                            <strong>{{ row.Symbol }}</strong>
+                        </td>
+
+                        <td>₹{{ row.Price }}</td>
+                        <td>{{ row.Status }}</td>
+                        <td>₹{{ row.Entry }}</td>
+                        <td>₹{{ row.SL }}</td>
+                        <td>₹{{ row.Target }}</td>
+                        <td>{{ row.Distance }}</td>
+                        <td>{{ row.PriceTime }}</td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
         {% else %}
-          No current setup in this strategy and universe.
+
+        <div class="empty">
+            No matching stock found.
+        </div>
+
         {% endif %}
-      </div>
-    {% endif %}
-  </section>
 
-  <section class="section open" id="open">
-    <div class="section-head">
-      <div><div class="section-title">Open Now</div><div class="section-desc">Entry condition has triggered.</div></div>
-      <div class="count">{{ [data.open|length, open_limit]|min }} / {{ data.open|length }}</div>
     </div>
-    {% if data.open %}
-      <div class="grid">
-      {% for c in data.open[:open_limit] %}
-        {{ card(c, mode=='PREMIUMPLUS') }}
-      {% endfor %}
-      </div>
-      {% if data.open|length > open_limit %}
-      <div class="loadmore">
-        <a href="/?mode={{ mode }}&universe={{ universe }}&best_limit={{ best_limit }}&open_limit={{ open_limit+12 }}&near_limit={{ near_limit }}#open">Load 12 more</a>
-      </div>
-      {% endif %}
-    {% else %}
-      <div class="empty">No open setup right now.</div>
-    {% endif %}
-  </section>
 
-  <section class="section near" id="near">
-    <div class="section-head">
-      <div><div class="section-title">Near Structure</div><div class="section-desc">Approaching the 0.786 entry structure.</div></div>
-      <div class="count">{{ [data.near|length, near_limit]|min }} / {{ data.near|length }}</div>
+    {% endif %}
+
+    
+
+
+    
+
+    
+
+    
+<div class="quality-zone" id="quality-opportunities">
+
+        <div class="quality-zone-title">
+            🔥 Best Setups Now
+        </div>
+
+        <div class="quality-zone-desc">
+            Separate quality-ranking section based on the 5-year
+            meaningful-swing backtest. Historical quality, win rate,
+            expectancy, sample size and target speed are combined with
+            the current 0.786 position.
+        </div>
+
+        <div class="quality-summary">
+
+            <div class="quality-summary-card">
+                <div class="quality-summary-label">Strong Now</div>
+                <div class="quality-summary-number green">
+                    {{ strong_rows|length }}
+                </div>
+            </div>
+
+            <div class="quality-summary-card">
+                <div class="quality-summary-label">Good Setups</div>
+                <div class="quality-summary-number blue">
+                    {{ good_count }}
+                </div>
+            </div>
+
+            <div class="quality-summary-card">
+                <div class="quality-summary-label">Quality Watch</div>
+                <div class="quality-summary-number yellow">
+                    {{ quality_watch_count }}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="quality-subtitle">
+            Strong Now
+        </div>
+
+        {% if strong_rows %}
+
+        <div class="signal-grid">
+
+            {% for row in strong_rows %}
+
+            <div class="quality-card">
+
+                <div class="quality-card-head">
+
+                    <div class="symbol">
+                        {{ row.Symbol }}
+                    </div>
+
+                    <div class="quality-badges">
+                        <span class="q-badge q-strong">STRONG NOW</span>
+                        <span class="q-badge q-grade">Grade {{ row.Grade }}</span>
+                        <span class="q-badge q-speed">{{ row.Speed }}</span>
+                    </div>
+
+                </div>
+
+                <div class="quality-body">
+
+                    <div class="quality-price-row">
+
+                        <div>
+                            <div class="current-label">Current Price</div>
+                            <div class="quality-price">₹{{ row.Price }}</div>
+                        </div>
+
+                        <div class="quality-state">
+                            {{ row.CurrentState }}
+                        </div>
+
+                    </div>
+
+                    <div class="quality-metrics">
+
+                        <div class="quality-metric">
+                            <div class="quality-metric-label">Entry 0.786</div>
+                            <div class="quality-metric-value entry-value">
+                                ₹{{ row.Entry }}
+                            </div>
+                        </div>
+
+                        <div class="quality-metric">
+                            <div class="quality-metric-label">Distance</div>
+                            <div class="quality-metric-value">
+                                {{ row.Distance }}
+                            </div>
+                        </div>
+
+                        <div class="quality-metric">
+                            <div class="quality-metric-label">Win Rate</div>
+                            <div class="quality-metric-value">
+                                {{ row.WinRate }}
+                            </div>
+                        </div>
+
+                        <div class="quality-metric">
+                            <div class="quality-metric-label">Historical Trades</div>
+                            <div class="quality-metric-value">
+                                {{ row.Trades }}
+                            </div>
+                        </div>
+
+                        <div class="quality-metric">
+                            <div class="quality-metric-label">Expectancy</div>
+                            <div class="quality-metric-value">
+                                {{ row.Expectancy }}
+                            </div>
+                        </div>
+
+                        <div class="quality-metric">
+                            <div class="quality-metric-label">Median Win Time</div>
+                            <div class="quality-metric-value">
+                                {{ row.MedianDays }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty">
+            No Strong Now setups at the moment.
+        </div>
+
+        {% endif %}
+
     </div>
-    {% if data.near %}
-      <div class="grid">
-      {% for c in data.near[:near_limit] %}
-        {{ card(c, mode=='PREMIUMPLUS') }}
-      {% endfor %}
-      </div>
-      {% if data.near|length > near_limit %}
-      <div class="loadmore">
-        <a href="/?mode={{ mode }}&universe={{ universe }}&best_limit={{ best_limit }}&open_limit={{ open_limit }}&near_limit={{ near_limit+12 }}#near">Load 12 more</a>
-      </div>
-      {% endif %}
-    {% else %}
-      <div class="empty">No near-structure setup right now.</div>
-    {% endif %}
-  </section>
 
-  <div class="foot">FibEdge 786 • Research use only • Historical results are not future guarantees • Market data may be delayed</div>
-</main>
+<div class="section" id="open-signals">
+
+        <div class="section-head">
+
+            <div>
+                <div class="section-title">
+                    Open Signals
+                </div>
+
+                <div class="section-desc">
+                    Entry has already triggered.
+                </div>
+            </div>
+
+            <div class="count-pill">
+                {{ open_rows|length }}
+            </div>
+
+        </div>
+
+        {% if open_rows %}
+
+        <div class="signal-grid">
+
+            {% for row in open_rows[:open_limit] %}
+
+            <div class="signal-card">
+
+                <div class="signal-top">
+
+                    <div class="symbol">
+                        {{ row.Symbol }}
+                    </div>
+
+                    <div class="badge badge-open">
+                        OPEN
+                    </div>
+
+                </div>
+
+                <div class="signal-body">
+
+                    <div class="current-label">
+                        Latest Price
+                    </div>
+
+                    <div class="current-price">
+                        ₹{{ row.Price }}
+                    </div>
+
+                    <div class="price-time">
+                        {{ row.PriceTime }}
+                    </div>
+
+                    <div class="levels">
+
+                        <div class="level">
+
+                            <div class="level-name">
+                                Entry
+                            </div>
+
+                            <div class="level-value entry-value">
+                                ₹{{ row.Entry }}
+                            </div>
+
+                        </div>
+
+                        <div class="level">
+
+                            <div class="level-name">
+                                Stop
+                            </div>
+
+                            <div class="level-value sl-value">
+                                ₹{{ row.SL }}
+                            </div>
+
+                        </div>
+
+                        <div class="level">
+
+                            <div class="level-name">
+                                Target
+                            </div>
+
+                            <div class="level-value target-value">
+                                ₹{{ row.Target }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% if open_rows|length > open_limit %}
+
+        <div style="text-align:center; margin-top:18px;">
+
+            <a
+                href="/?open_limit={{ open_limit + 24 }}&watch_limit={{ watch_limit }}#open-signals"
+                style="
+                    display:inline-block;
+                    text-decoration:none;
+                    background:#1a2c42;
+                    color:#edf4fc;
+                    padding:11px 18px;
+                    border-radius:9px;
+                    font-size:12px;
+                    font-weight:800;
+                "
+            >
+                Load More Open Signals
+            </a>
+
+            <div style="
+                margin-top:8px;
+                color:#66798f;
+                font-size:11px;
+            ">
+                Showing {{ [open_limit, open_rows|length]|min }}
+                of {{ open_rows|length }}
+            </div>
+
+        </div>
+
+        {% endif %}
+
+        {% else %}
+
+        <div class="empty">
+            No open signals.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+<div class="section">
+
+        <div class="section-head">
+
+            <div>
+                <div class="section-title">
+                    Near 0.786 Entry
+                </div>
+
+                <div class="section-desc">
+                    Highest-priority upcoming setups.
+                </div>
+            </div>
+
+            <div class="count-pill">
+                {{ near_rows|length }}
+            </div>
+
+        </div>
+
+        {% if near_rows %}
+
+        <div class="signal-grid">
+
+            {% for row in near_rows %}
+
+            <div class="signal-card">
+
+                <div class="signal-top">
+                    <div class="symbol">
+                        {{ row.Symbol }}
+                    </div>
+
+                    <div class="badge badge-near">
+                        NEAR ENTRY
+                    </div>
+                </div>
+
+                <div class="signal-body">
+
+                    <div class="current-label">
+                        Latest Price
+                    </div>
+
+                    <div class="current-price">
+                        ₹{{ row.Price }}
+                    </div>
+
+                    <div class="price-time">
+                        {{ row.PriceTime }}
+                    </div>
+
+                    <div class="levels">
+
+                        <div class="level">
+                            <div class="level-name">
+                                Entry
+                            </div>
+
+                            <div class="level-value entry-value">
+                                ₹{{ row.Entry }}
+                            </div>
+                        </div>
+
+                        <div class="level">
+                            <div class="level-name">
+                                Stop
+                            </div>
+
+                            <div class="level-value sl-value">
+                                ₹{{ row.SL }}
+                            </div>
+                        </div>
+
+                        <div class="level">
+                            <div class="level-name">
+                                Target
+                            </div>
+
+                            <div class="level-value target-value">
+                                ₹{{ row.Target }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty">
+            No near-entry setups right now.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+<div class="section" id="watchlist">
+
+        <div class="section-head">
+
+            <div>
+
+                <div class="section-title">
+                    Watchlist
+                </div>
+
+                <div class="section-desc">
+                    Waiting setups within 10% of 0.786.
+                </div>
+
+            </div>
+
+            <div class="count-pill">
+                {{ watch_rows|length }}
+            </div>
+
+        </div>
+
+        {% if watch_rows %}
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Price</th>
+                        <th>Distance</th>
+                        <th>Entry</th>
+                        <th>SL</th>
+                        <th>Target</th>
+                        <th>Price Time</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for row in watch_rows[:watch_limit] %}
+
+                    <tr>
+                        <td>
+                            <strong>{{ row.Symbol }}</strong>
+                        </td>
+
+                        <td>₹{{ row.Price }}</td>
+                        <td class="blue">{{ row.Distance }}</td>
+                        <td>₹{{ row.Entry }}</td>
+                        <td>₹{{ row.SL }}</td>
+                        <td>₹{{ row.Target }}</td>
+                        <td>{{ row.PriceTime }}</td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% if watch_rows|length > watch_limit %}
+
+        <div style="text-align:center; margin-top:18px;">
+
+            <a
+                href="/?open_limit={{ open_limit }}&watch_limit={{ watch_limit + 100 }}#watchlist"
+                style="
+                    display:inline-block;
+                    text-decoration:none;
+                    background:#1a2c42;
+                    color:#edf4fc;
+                    padding:11px 18px;
+                    border-radius:9px;
+                    font-size:12px;
+                    font-weight:800;
+                "
+            >
+                Load More Watchlist Stocks
+            </a>
+
+            <div style="
+                margin-top:8px;
+                color:#66798f;
+                font-size:11px;
+            ">
+                Showing {{ [watch_limit, watch_rows|length]|min }}
+                of {{ watch_rows|length }}
+            </div>
+
+        </div>
+
+        {% endif %}
+
+        {% else %}
+
+        <div class="empty">
+            No nearby waiting setups.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="section" id="good-historical-setups">
+
+        <div class="section-head">
+
+            <div>
+
+                <div class="section-title">
+                    📊 Good Historical Setups
+                </div>
+
+                <div class="section-desc">
+                    Positive historical FibEdge setups ranked by
+                    win rate, expectancy, sample size and target speed.
+                </div>
+
+            </div>
+
+            <div class="count-pill">
+                {{ good_count }}
+            </div>
+
+        </div>
+
+
+        {% if good_rows %}
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>State</th>
+                        <th>Price</th>
+                        <th>Entry</th>
+                        <th>Distance</th>
+                        <th>Grade</th>
+                        <th>Win Rate</th>
+                        <th>Trades</th>
+                        <th>Expectancy</th>
+                        <th>Median Win</th>
+                        <th>Speed</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for row in good_rows[:quality_limit] %}
+
+                    <tr>
+                        <td><strong>{{ row.Symbol }}</strong></td>
+                        <td>{{ row.CurrentState }}</td>
+                        <td>₹{{ row.Price }}</td>
+                        <td>₹{{ row.Entry }}</td>
+                        <td>{{ row.Distance }}</td>
+                        <td>{{ row.Grade }}</td>
+                        <td>{{ row.WinRate }}</td>
+                        <td>{{ row.Trades }}</td>
+                        <td>{{ row.Expectancy }}</td>
+                        <td>{{ row.MedianDays }}</td>
+                        <td>{{ row.Speed }}</td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+        {% if good_count > quality_limit %}
+
+        <div style="text-align:center; margin-top:18px;">
+
+            <a
+                href="/?quality_limit={{ quality_limit + 20 }}&open_limit={{ open_limit }}&watch_limit={{ watch_limit }}#quality-opportunities"
+                style="
+                    display:inline-block;
+                    text-decoration:none;
+                    background:#1a2c42;
+                    color:#edf4fc;
+                    padding:11px 18px;
+                    border-radius:9px;
+                    font-size:12px;
+                    font-weight:800;
+                "
+            >
+                Load More Good Setups
+            </a>
+
+            <div style="
+                margin-top:8px;
+                color:#66798f;
+                font-size:11px;
+            ">
+                Showing {{ [quality_limit, good_count]|min }}
+                of {{ good_count }}
+            </div>
+
+        </div>
+
+        {% endif %}
+
+        {% else %}
+
+        <div class="empty">
+            No Good setups at the moment.
+        </div>
+
+        {% endif %}
+
+    
+
+    </div>
+
+
+
+    <div class="footer">
+
+        FibEdge 786 • NSE Fibonacci Research Scanner
+
+        <br>
+
+        Market data is refreshed automatically by GitHub Actions.
+
+        <br>
+
+        Yahoo Finance data may be delayed relative to NSE.
+
+        <br><br>
+
+        Research use only. Not financial advice.
+
+    </div>
+
+</div>
+
 </body>
-</html>"""
+</html>
+"""
+
+
+def load_latest_data():
+
+    response = requests.get(
+        GITHUB_CSV_URL,
+        timeout=15,
+        headers={
+            "Cache-Control": "no-cache"
+        }
+    )
+
+    response.raise_for_status()
+
+    return pd.read_csv(
+        io.StringIO(
+            response.text
+        )
+    )
+
+
+def clean_number(value):
+
+    if pd.isna(value):
+        return "-"
+
+    try:
+        return f"{float(value):.2f}"
+
+    except Exception:
+        return "-"
+
+
+def clean_time(value):
+
+    if pd.isna(value):
+        return "-"
+
+    try:
+
+        dt = pd.to_datetime(
+            value
+        )
+
+        return dt.strftime(
+            "%d %b %Y • %I:%M %p"
+        )
+
+    except Exception:
+
+        return str(value)
+
+
+def make_rows(df):
+
+    rows = []
+
+    for _, row in df.iterrows():
+
+        distance = row.get(
+            "Distance %",
+            None
+        )
+
+        if pd.isna(distance):
+
+            distance_text = "-"
+
+        else:
+
+            distance_text = (
+                f"{float(distance):.2f}%"
+            )
+
+        rows.append({
+
+            "Symbol":
+                str(row["Symbol"])
+                .replace(".NS", ""),
+
+            "Price":
+                clean_number(
+                    row.get("Price")
+                ),
+
+            "Status":
+                row.get(
+                    "Status",
+                    "-"
+                ),
+
+            "Entry":
+                clean_number(
+                    row.get("Entry")
+                ),
+
+            "SL":
+                clean_number(
+                    row.get("SL")
+                ),
+
+            "Target":
+                clean_number(
+                    row.get("Target")
+                ),
+
+            "Distance":
+                distance_text,
+
+            "PriceTime":
+                clean_time(
+                    row.get("Price Time")
+                )
+        })
+
+    return rows
+
+
+
+def make_quality_rows(df):
+
+    rows = []
+
+    for _, row in df.iterrows():
+
+        distance = row.get("Distance %", None)
+        win_rate = row.get("Win Rate %", None)
+        expectancy = row.get("Expectancy %", None)
+        median_days = row.get("Median Win Days", None)
+
+        rows.append({
+
+            "Symbol":
+                str(row.get("Symbol", "")).replace(".NS", ""),
+
+            "CurrentState":
+                str(row.get("Current State", "-")),
+
+            "Price":
+                clean_number(row.get("Price")),
+
+            "Entry":
+                clean_number(row.get("Entry")),
+
+            "Distance":
+                f"{float(distance):.2f}%"
+                if not pd.isna(distance)
+                else "-",
+
+            "Grade":
+                str(row.get("Live Grade", "-")),
+
+            "WinRate":
+                f"{float(win_rate):.2f}%"
+                if not pd.isna(win_rate)
+                else "-",
+
+            "Trades":
+                int(row.get("Resolved Trades", 0))
+                if not pd.isna(row.get("Resolved Trades", None))
+                else 0,
+
+            "Expectancy":
+                f"{float(expectancy):+.2f}%"
+                if not pd.isna(expectancy)
+                else "-",
+
+            "MedianDays":
+                f"{float(median_days):.1f} days"
+                if not pd.isna(median_days)
+                else "-",
+
+            "Speed":
+                str(row.get("Speed Group", "-"))
+        })
+
+    return rows
+
 
 @app.route("/")
 def home():
-    mode = request.args.get("mode", "CLASSIC").upper()
-    if mode not in MODES:
-        mode = "CLASSIC"
-
-    universe = request.args.get("universe", "ALL").upper()
-    valid_universes = {k for k, _ in FILTERS}
-    if universe not in valid_universes:
-        universe = "ALL"
-
-    def read_limit(name, default, maximum=120):
-        try:
-            return max(default, min(int(request.args.get(name, default)), maximum))
-        except Exception:
-            return default
-
-    best_limit = read_limit("best_limit", 9, 90)
-    open_limit = read_limit("open_limit", 12, 120)
-    near_limit = read_limit("near_limit", 12, 120)
 
     try:
-        signals = load_csv_source("FIBEDGE_LATEST_SIGNALS.csv", SIGNALS_URL)
-        opp = load_csv_source("FIBEDGE_BEST_OPPORTUNITIES_V3.csv", OPP_URL)
-        mapping = load_mapping()
 
-        signals = apply_universe(signals, universe, mapping)
-        opp = apply_universe(opp, universe, mapping)
+        df = load_latest_data()
 
-        if mode == "CLASSIC":
-            data = build_classic(signals, opp)
-        elif mode == "CLEAN":
-            data = build_clean(signals, opp, premium=False)
-        elif mode == "PREMIUM":
-            data = build_clean(signals, opp, premium=True)
-        else:
-            data = build_premium_plus(
-                load_json_source("netlify_site/premium_plus_candidates.json", PREMIUM_PLUS_URL),
-                universe,
-                mapping,
+        opportunity_response = requests.get(
+            GITHUB_OPPORTUNITY_URL,
+            timeout=15,
+            headers={
+                "Cache-Control": "no-cache"
+            }
+        )
+
+        opportunity_response.raise_for_status()
+
+        opportunity_df = pd.read_csv(
+            io.StringIO(
+                opportunity_response.text
             )
-
-        valid_times = pd.to_datetime(signals.get("Price Time"), errors="coerce").dropna()
-        latest = (
-            valid_times.max().strftime("%d %b %Y • %I:%M %p")
-            if len(valid_times)
-            else "Unavailable"
         )
 
-        universe_label = dict(FILTERS).get(universe, "All")
+    except Exception as error:
 
-        return render_template_string(
-            HTML,
-            modes=MODES,
-            mode=mode,
-            filters=FILTERS,
-            universe=universe,
-            universe_label=universe_label,
-            latest=latest,
-            data=data,
-            best_limit=best_limit,
-            open_limit=open_limit,
-            near_limit=near_limit,
+        return f"""
+        <body style="
+            background:#07111f;
+            color:white;
+            font-family:Arial;
+            padding:40px;
+        ">
+
+            <h2>
+                FibEdge 786
+            </h2>
+
+            <p>
+                Latest market data could not be loaded.
+            </p>
+
+            <p>
+                {error}
+            </p>
+
+        </body>
+        """, 503
+
+
+    open_df = df[
+        df["Status"] == "OPEN"
+    ].copy()
+
+
+    near_df = df[
+        df["Status"] == "NEAR 0.786"
+    ].copy()
+
+
+    waiting_df = df[
+        df["Status"] == "WAITING FOR 0.786"
+    ].copy()
+
+
+    watch_df = waiting_df[
+        waiting_df["Distance %"] <= 10
+    ].copy()
+
+
+    if not open_df.empty:
+
+        open_df = open_df.sort_values(
+            "Distance %",
+            key=lambda s: s.abs(),
+            na_position="last"
         )
 
-    except Exception as exc:
-        return render_template_string(
-            """<!doctype html><html><body style="margin:0;background:#07111d;color:#fff;font-family:Arial;padding:40px">
-            <h2>FibEdge 786</h2>
-            <div style="max-width:760px;padding:18px;border:1px solid #704348;border-radius:12px;background:#29171c">
-              <b>Dashboard data could not be loaded.</b>
-              <p style="color:#ffc6cb">{{ error }}</p>
-            </div>
-            </body></html>""",
-            error=str(exc),
-        ), 503
+
+    if not near_df.empty:
+
+        near_df = near_df.sort_values(
+            "Distance %",
+            na_position="last"
+        )
+
+
+    if not watch_df.empty:
+
+        watch_df = watch_df.sort_values(
+            "Distance %",
+            na_position="last"
+        )
+
+
+
+    if opportunity_df.empty:
+
+        strong_df = pd.DataFrame()
+        good_df = pd.DataFrame()
+        quality_watch_df = pd.DataFrame()
+
+    else:
+
+        strong_df = opportunity_df[
+            opportunity_df["Opportunity"].isin([
+                "ELITE NOW",
+                "STRONG NOW"
+            ])
+        ].copy()
+
+        good_df = opportunity_df[
+            opportunity_df["Opportunity"] == "GOOD"
+        ].copy()
+
+        quality_watch_df = opportunity_df[
+            opportunity_df["Opportunity"] == "WATCH"
+        ].copy()
+
+    try:
+        quality_limit = max(
+            20,
+            int(request.args.get("quality_limit", 20))
+        )
+    except Exception:
+        quality_limit = 20
+
+
+    search = (
+        request.args
+        .get("q", "")
+        .strip()
+        .upper()
+    )
+
+    try:
+        open_limit = max(
+            24,
+            min(
+                int(request.args.get("open_limit", 24)),
+                len(open_df)
+            )
+        )
+    except Exception:
+        open_limit = 24
+
+    try:
+        watch_limit = max(
+            100,
+            min(
+                int(request.args.get("watch_limit", 100)),
+                len(watch_df)
+            )
+        )
+    except Exception:
+        watch_limit = 100
+
+
+    search_df = pd.DataFrame()
+
+
+    if search:
+
+        search_df = df[
+            df["Symbol"]
+            .astype(str)
+            .str.upper()
+            .str.contains(
+                search,
+                regex=False
+            )
+        ].copy()
+
+
+    valid_times = pd.to_datetime(
+        df["Price Time"],
+        errors="coerce"
+    ).dropna()
+
+
+    if len(valid_times) > 0:
+
+        latest_timestamp = (
+            valid_times
+            .max()
+            .strftime(
+                "%d %b %Y • %I:%M %p"
+            )
+        )
+
+    else:
+
+        latest_timestamp = (
+            "Unavailable"
+        )
+
+
+    return render_template_string(
+
+        HTML,
+
+        total_count=len(df),
+
+        open_count=len(open_df),
+
+        near_count=len(near_df),
+
+        waiting_count=len(waiting_df),
+
+        strong_rows=make_quality_rows(strong_df),
+
+        good_rows=make_quality_rows(good_df),
+
+        good_count=len(good_df),
+
+        quality_watch_count=len(quality_watch_df),
+
+        quality_limit=quality_limit,
+
+        open_limit=open_limit,
+        watch_limit=watch_limit,
+
+        open_rows=make_rows(
+            open_df
+        ),
+
+        near_rows=make_rows(
+            near_df
+        ),
+
+        watch_rows=make_rows(
+            watch_df
+        ),
+
+        search_rows=make_rows(
+            search_df
+        ),
+
+        search=search,
+
+        latest_timestamp=
+            latest_timestamp
+    )
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5007, debug=True)
+
+    app.run(
+        host="0.0.0.0",
+        port=5007,
+        debug=True
+    )
