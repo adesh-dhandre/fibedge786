@@ -34,6 +34,7 @@ body{
 body.mode-clean{--mode-accent:#52b7ff;--mode-accent2:#80e7ff;--mode-rgb:82,183,255}
 body.mode-premium{--mode-accent:#f4c55c;--mode-accent2:#ff8ad8;--mode-rgb:244,197,92}
 body.mode-premiumplus{--mode-accent:#e9bd58;--mode-accent2:#ffe29a;--mode-rgb:233,189,88}
+body.mode-strategy05{--mode-accent:#43e6b2;--mode-accent2:#a8ffe2;--mode-rgb:67,230,178}
 body:after{
   content:"";position:fixed;inset:auto -12vw -28vh auto;width:52vw;height:52vw;z-index:-2;
   border-radius:50%;background:radial-gradient(circle,rgba(var(--mode-rgb),.12),transparent 63%);
@@ -88,7 +89,7 @@ h1{font-size:clamp(34px,5vw,58px);letter-spacing:-.05em;line-height:.98;margin:9
 .tag{padding:8px 11px;border-radius:999px;font-size:10px;font-weight:850;color:#b7c8d8;background:#0b1a29;border:1px solid #274057}
 .tag.live{color:var(--accent2);border-color:rgba(var(--accent-rgb),.38);background:rgba(var(--accent-rgb),.07)}
 .modebar{
-  margin:18px 0 12px;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+  margin:18px 0 12px;padding:8px;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
   background:rgba(7,15,25,.9);border:1px solid #20344a;border-radius:17px
 }
 .mode{
@@ -243,7 +244,7 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
   <section class="hero">
     <div class="eyebrow">Fibonacci setup intelligence</div>
     <h1>Cleaner setups.<br>Faster decisions.</h1>
-    <p>Three separate FibEdge views for the original scanner, dominant clean swings, and the highest-quality recovery structures. Use the scanner to narrow the market, then confirm the chart manually.</p>
+    <p>Five separate FibEdge views for the original scanner, clean swings, premium recovery structures, and confirmed continuation research. Use the scanner to narrow the market, then confirm the chart manually.</p>
     <div class="herofoot">
       <span class="tag live">LIVE DASHBOARD</span>
       <span class="tag">0.786 ENTRY ZONE</span>
@@ -268,6 +269,10 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
     <button class="mode" data-mode="PREMIUMPLUS">
       <span class="name">04 · Premium+ V1</span>
       <span class="note">76.97% historical win rate · frozen V1 confirmation.</span>
+    </button>
+    <button class="mode" data-mode="STRATEGY05">
+      <span class="name">05 · Confirmed Continuation</span>
+      <span class="note">1.260: 87.92% historical · 1.500: 77.13% historical.</span>
     </button>
   </div>
 
@@ -336,7 +341,8 @@ const URLS={
   signals:BASE+'FIBEDGE_LATEST_SIGNALS.csv',
   opp:BASE+'FIBEDGE_BEST_OPPORTUNITIES_V3.csv',
   map:'./STOCK_UNIVERSE_MAPPING.csv',
-  premiumPlus:BASE+'archive/premium_v1/data/premium_plus_candidates.json'
+  premiumPlus:BASE+'archive/premium_v1/data/premium_plus_candidates.json',
+  strategy05:BASE+'strategy_05_live/data/strategy_05_candidates.json'
 };
 
 const FILTERS=[
@@ -349,7 +355,7 @@ const FILTERS=[
   {key:'MICROCAP250',label:'Microcap 250'}
 ];
 
-let DATA={signals:[],opp:[],map:[],premiumPlus:{candidates:[]}};
+let DATA={signals:[],opp:[],map:[],premiumPlus:{candidates:[]},strategy05:{candidates:[]}};
 let selected='ALL',mode='CLASSIC',openLimit=24,watchLimit=100,qualityLimit=20;
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -409,12 +415,55 @@ function renderPremiumPlusView(){
   document.getElementById('modeContent').innerHTML='<div class="previewtop"><div><h2>Premium+ V1</h2><p>Behavior-confirmed setup. 234 wins from 304 resolved historical trades.</p></div><span class="pill">76.97% HISTORICAL WIN RATE</span></div><div class="previewalert">Historical result, not guaranteed future accuracy. Signal only after a completed daily candle; candidate entry is next session.</div>'+previewSection('Premium+ Confirmed','Only fully confirmed Premium+ V1 candidates.',xs.length,card,'section-best');
 }
 
+function renderStrategy05View(){
+  const rows=[...(DATA.strategy05?.candidates||[])];
+  const set=currentFilterSet();
+  const xs=set?rows.filter(r=>set.has(sym(r.symbol))):rows;
+  const hist126=DATA.strategy05?.historical_research?.primary_1260||{};
+  const hist150=DATA.strategy05?.historical_research?.extension_1500||{};
+  const updated=DATA.strategy05?.market_date||DATA.strategy05?.updated_at||'Waiting for first refresh';
+
+  const card=xs.length?'<div class="previewgrid">'+xs.map((r,i)=>
+    '<div class="pcard" style="animation-delay:'+(i*35)+'ms">'+
+      '<div class="pcardhead"><div class="pcardsym">'+esc(sym(r.symbol))+'</div><div class="pcardbadge">EOD CONFIRMED</div></div>'+
+      '<div class="pprice">₹'+esc(num(r.close))+'</div>'+
+      '<div class="pmeta">Signal '+esc(r.signal_date||'-')+' · '+esc(r.candle_direction||'-')+' candle</div>'+
+      '<div class="pmetrics">'+
+        '<div class="pmetric"><span>Fib 0.786</span><b>'+esc(num(r.fib_0786))+'</b></div>'+
+        '<div class="pmetric"><span>Stop 0.500</span><b>'+esc(num(r.sl))+'</b></div>'+
+        '<div class="pmetric"><span>Target 1.260</span><b>'+esc(num(r.target_126))+'</b></div>'+
+        '<div class="pmetric"><span>Extension 1.500</span><b>'+esc(num(r.target_150))+'</b></div>'+
+        '<div class="pmetric"><span>Close above 0.786</span><b>'+esc(pct(r.close_vs_786_pct,true))+'</b></div>'+
+        '<div class="pmetric"><span>Body / Range</span><b>'+esc(num(r.body_pct_range))+'%</b></div>'+
+        '<div class="pmetric"><span>Decline</span><b>'+esc(num(r.decline_pct))+'%</b></div>'+
+        '<div class="pmetric"><span>Swing</span><b>'+esc(r.swing_days||'-')+'d</b></div>'+
+        '<div class="pmetric"><span>RSI 14</span><b>'+esc(num(r.rsi14))+'</b></div>'+
+      '</div>'+
+    '</div>'
+  ).join('')+'</div>':'<div class="empty"><b>No confirmed continuation signal in the latest completed daily candle.</b><br><br>Rule: close ≥4% above Fib 0.786 and candle body ≥60% of the full High–Low range.</div>';
+
+  const stats=
+    '<div class="previewstats">'+
+      '<div class="pstat"><div class="lab">Primary 1.260</div><b>'+esc(num(hist126.win_rate_pct))+'%</b><div class="pmeta">'+esc(hist126.resolved_trades||1060)+' resolved historical trades</div></div>'+
+      '<div class="pstat"><div class="lab">Extension 1.500</div><b>'+esc(num(hist150.win_rate_pct))+'%</b><div class="pmeta">'+esc(hist150.resolved_trades||1023)+' resolved historical trades</div></div>'+
+      '<div class="pstat"><div class="lab">Confirmed Today</div><b>'+xs.length+'</b><div class="pmeta">Completed daily candles only</div></div>'+
+      '<div class="pstat"><div class="lab">Feed Date</div><b style="font-size:14px;margin-top:10px">'+esc(String(updated).slice(0,10))+'</b><div class="pmeta">Next-session setup</div></div>'+
+    '</div>';
+
+  document.getElementById('modeContent').innerHTML=
+    '<div class="previewtop"><div><h2>Confirmed Continuation</h2><p>Strong continuation after Fib 0.786. A setup is confirmed only after the daily candle closes at least 4% above 0.786 with a body at least 60% of the candle range.</p></div><span class="pill">STRATEGY 05 · RESEARCH CONFIRMED</span></div>'+
+    '<div class="previewalert"><b>Execution timing:</b> confirmation uses the completed daily candle and the setup is evaluated from the next session. Historical research is not a guarantee of future results. Actual next-session fill and executable reward/risk still require the final execution audit.</div>'+
+    stats+
+    previewSection('Confirmed Continuation Signals','Same confirmation supports the 1.260 primary target and the 1.500 extension target.',xs.length,card,'section-best');
+}
+
 function renderModeView(){
   const classic=document.getElementById('classicArea'),pending=document.getElementById('modePending');
   if(mode==='CLASSIC'){classic.style.display='block';pending.style.display='none';render();return}
 
   classic.style.display='none';pending.style.display='block';
   if(mode==='PREMIUMPLUS'){renderPremiumPlusView();return}
+  if(mode==='STRATEGY05'){renderStrategy05View();return}
   let rows=cleanPreviewRows();
   const premium=mode==='PREMIUM';
 
@@ -468,7 +517,7 @@ function renderChips(){const box=document.getElementById('chips');box.innerHTML=
 function latestLabel(rows){const ds=rows.map(r=>new Date(r['Price Time'])).filter(d=>!isNaN(d));if(!ds.length)return'Unavailable';const d=new Date(Math.max(...ds.map(x=>x.getTime())));return d.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})}
 function renderSearch(sig){const q=document.getElementById('searchInput').value.trim().toUpperCase(),sec=document.getElementById('searchSection');if(!q){sec.style.display='none';return}const rs=sig.filter(r=>sym(r.Symbol).includes(q)).map(signalRow);sec.style.display='block';document.getElementById('searchDesc').textContent=q;document.getElementById('searchCount').textContent=rs.length;document.getElementById('searchRows').innerHTML=table(rs,'search')}
 function render(){if(mode!=='CLASSIC')return;const page=document.getElementById('page'),err=document.getElementById('error');page.classList.add('loading');err.style.display='none';try{const sig=filtered(DATA.signals),opp=filtered(DATA.opp);const od=sig.filter(r=>r.Status==='OPEN').sort(byAbsDistance);const nd=sig.filter(r=>r.Status==='NEAR 0.786').sort(byDistance);const wd=sig.filter(r=>r.Status==='WAITING FOR 0.786');const ww=wd.filter(r=>Number(r['Distance %'])<=10).sort(byDistance);const strong=opp.filter(r=>['ELITE NOW','STRONG NOW'].includes(r.Opportunity));const good=opp.filter(r=>r.Opportunity==='GOOD');const qw=opp.filter(r=>r.Opportunity==='WATCH');document.getElementById('latest').textContent=latestLabel(sig);document.getElementById('total').textContent=sig.length;document.getElementById('openN').textContent=od.length;document.getElementById('nearN').textContent=nd.length;document.getElementById('waitN').textContent=wd.length;document.getElementById('strongN').textContent=strong.length;document.getElementById('goodNTop').textContent=good.length;document.getElementById('qwatchN').textContent=qw.length;document.getElementById('strongRows').innerHTML=strongCards(strong.map(qualityRow));document.getElementById('openCount').textContent=od.length;document.getElementById('openRows').innerHTML=cards(od.slice(0,openLimit).map(signalRow),'OPEN');document.getElementById('nearCount').textContent=nd.length;document.getElementById('nearRows').innerHTML=cards(nd.map(signalRow),'NEAR ENTRY');document.getElementById('watchCount').textContent=ww.length;document.getElementById('watchRows').innerHTML=table(ww.slice(0,watchLimit).map(signalRow),'watch');document.getElementById('goodCount').textContent=good.length;document.getElementById('goodRows').innerHTML=table(good.slice(0,qualityLimit).map(qualityRow),'quality');if(od.length>openLimit)btn('openLoad','Load More Open Signals',()=>{openLimit+=24;render()});else clearBtn('openLoad');if(ww.length>watchLimit)btn('watchLoad','Load More Watchlist Stocks',()=>{watchLimit+=100;render()});else clearBtn('watchLoad');if(good.length>qualityLimit)btn('goodLoad','Load More Good Setups',()=>{qualityLimit+=20;render()});else clearBtn('goodLoad');renderSearch(sig)}catch(e){err.textContent=e.message||String(e);err.style.display='block'}finally{page.classList.remove('loading')}}
-async function loadAll(silent=false){const err=document.getElementById('error');if(!silent)document.getElementById('latest').textContent='Loading…';try{const[signals,opp,map,premiumPlus]=await Promise.all([fetchCSV(URLS.signals),fetchCSV(URLS.opp),fetchCSV(URLS.map),fetchJSON(URLS.premiumPlus).catch(()=>({candidates:[]}))]);DATA={signals,opp,map,premiumPlus};renderChips();renderModeView()}catch(e){err.textContent='Data load failed: '+(e.message||e);err.style.display='block';document.getElementById('latest').textContent='Unavailable'}}
+async function loadAll(silent=false){const err=document.getElementById('error');if(!silent)document.getElementById('latest').textContent='Loading…';try{const[signals,opp,map,premiumPlus,strategy05]=await Promise.all([fetchCSV(URLS.signals),fetchCSV(URLS.opp),fetchCSV(URLS.map),fetchJSON(URLS.premiumPlus).catch(()=>({candidates:[]})),fetchJSON(URLS.strategy05).catch(()=>({candidates:[]}))]);DATA={signals,opp,map,premiumPlus,strategy05};renderChips();renderModeView()}catch(e){err.textContent='Data load failed: '+(e.message||e);err.style.display='block';document.getElementById('latest').textContent='Unavailable'}}
 document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();render()});
 const q=new URLSearchParams(location.search).get('universe');
 if(FILTERS.some(x=>x.key===String(q||'').toUpperCase()))selected=String(q).toUpperCase();
