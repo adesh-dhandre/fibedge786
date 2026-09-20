@@ -61,3 +61,20 @@ Primary target:
 - Aim for >= 70% test win rate
 - Broad unique-stock coverage
 - No rule accepted from test-period tuning
+
+
+## Research priority update
+
+### Main goal
+Keep the original Fib structure focused on **0.786 -> 1.260** and search for
+repeatable candle / momentum / price-action / trend / volatility / volume
+patterns that can produce **70%+ historical win rate** while retaining a
+large number of resolved trades. This remains the primary Strategy 05 goal.
+
+### Secondary 1.50 feature
+Do **not** discard the Fib **1.50 target** research. The current V5
+`CLOSE3_UP4OF5` result produced about **52.34% overall historical win rate**
+with **1,026 resolved trades**, **1:2.50 reward/risk**, and positive
+historical expectancy. This can be revisited later as a separate
+high-reward setup/feature even though it does not satisfy the main 70%+
+win-rate objective.
