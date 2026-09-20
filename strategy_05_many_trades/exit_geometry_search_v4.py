@@ -17,7 +17,7 @@ DEV_END = pd.Timestamp("2024-12-31")
 # Entry remains locked at Fib 0.786.
 # We now test whether the original 1.260 target is the main reason
 # high-volume hit-rate cannot reach 70%.
-TARGET_FIB_GRID = [0.95, 1.00, 1.05, 1.10, 1.15, 1.20, 1.26]
+TARGET_FIB_GRID = [1.05, 1.10, 1.15, 1.20, 1.26]
 STOP_FIB_GRID = [0.50]
 
 # Broad candidate selectors discovered in V3.
