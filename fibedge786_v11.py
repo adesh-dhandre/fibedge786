@@ -473,6 +473,9 @@ a{text-decoration:none;color:inherit}
 .empty{text-align:center;padding:28px 16px;border:1px dashed #29475f;border-radius:11px;color:#748da4;font-size:10px;line-height:1.55}
 .foot{text-align:center;margin-top:35px;padding-top:20px;border-top:1px solid #173048;color:#587188;font-size:8px}
 .error{padding:16px;border:1px solid #704348;background:#2a171c;border-radius:12px;color:#ffc6cb;font-size:10px}
+.loadmore{text-align:center;margin-top:14px}
+.loadmore a{display:inline-block;padding:9px 14px;border-radius:9px;border:1px solid #28506d;background:#0d2234;color:#9ed8ff;font-size:9px;font-weight:850;transition:.16s ease}
+.loadmore a:hover{border-color:#4aa9df;background:#12304a;color:#fff}
 @media(max-width:980px){.modes,.guide-grid{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){
   .navin,.page{padding-left:12px;padding-right:12px}
@@ -576,17 +579,22 @@ a{text-decoration:none;color:inherit}
   </div>
   {%- endmacro %}
 
-  <section class="section best">
+  <section class="section best" id="best">
     <div class="section-head">
       <div><div class="section-title">Best Setups</div><div class="section-desc">Highest-priority stocks from the selected strategy.</div></div>
-      <div class="count">{{ data.best|length }}</div>
+      <div class="count">{{ [data.best|length, best_limit]|min }} / {{ data.best|length }}</div>
     </div>
     {% if data.best %}
       <div class="grid">
-      {% for c in data.best %}
+      {% for c in data.best[:best_limit] %}
         {{ card(c, mode=='PREMIUMPLUS') }}
       {% endfor %}
       </div>
+      {% if data.best|length > best_limit %}
+      <div class="loadmore">
+        <a href="/?mode={{ mode }}&universe={{ universe }}&best_limit={{ best_limit+9 }}&open_limit={{ open_limit }}&near_limit={{ near_limit }}#best">Load 9 more</a>
+      </div>
+      {% endif %}
     {% else %}
       <div class="empty">
         {% if mode=='PREMIUMPLUS' %}
@@ -598,33 +606,43 @@ a{text-decoration:none;color:inherit}
     {% endif %}
   </section>
 
-  <section class="section open">
+  <section class="section open" id="open">
     <div class="section-head">
       <div><div class="section-title">Open Now</div><div class="section-desc">Entry condition has triggered.</div></div>
-      <div class="count">{{ data.open|length }}</div>
+      <div class="count">{{ [data.open|length, open_limit]|min }} / {{ data.open|length }}</div>
     </div>
     {% if data.open %}
       <div class="grid">
-      {% for c in data.open %}
+      {% for c in data.open[:open_limit] %}
         {{ card(c, mode=='PREMIUMPLUS') }}
       {% endfor %}
       </div>
+      {% if data.open|length > open_limit %}
+      <div class="loadmore">
+        <a href="/?mode={{ mode }}&universe={{ universe }}&best_limit={{ best_limit }}&open_limit={{ open_limit+12 }}&near_limit={{ near_limit }}#open">Load 12 more</a>
+      </div>
+      {% endif %}
     {% else %}
       <div class="empty">No open setup right now.</div>
     {% endif %}
   </section>
 
-  <section class="section near">
+  <section class="section near" id="near">
     <div class="section-head">
       <div><div class="section-title">Near Structure</div><div class="section-desc">Approaching the 0.786 entry structure.</div></div>
-      <div class="count">{{ data.near|length }}</div>
+      <div class="count">{{ [data.near|length, near_limit]|min }} / {{ data.near|length }}</div>
     </div>
     {% if data.near %}
       <div class="grid">
-      {% for c in data.near %}
+      {% for c in data.near[:near_limit] %}
         {{ card(c, mode=='PREMIUMPLUS') }}
       {% endfor %}
       </div>
+      {% if data.near|length > near_limit %}
+      <div class="loadmore">
+        <a href="/?mode={{ mode }}&universe={{ universe }}&best_limit={{ best_limit }}&open_limit={{ open_limit }}&near_limit={{ near_limit+12 }}#near">Load 12 more</a>
+      </div>
+      {% endif %}
     {% else %}
       <div class="empty">No near-structure setup right now.</div>
     {% endif %}
@@ -645,6 +663,16 @@ def home():
     valid_universes = {k for k, _ in FILTERS}
     if universe not in valid_universes:
         universe = "ALL"
+
+    def read_limit(name, default, maximum=120):
+        try:
+            return max(default, min(int(request.args.get(name, default)), maximum))
+        except Exception:
+            return default
+
+    best_limit = read_limit("best_limit", 9, 90)
+    open_limit = read_limit("open_limit", 12, 120)
+    near_limit = read_limit("near_limit", 12, 120)
 
     try:
         signals = load_csv_source("FIBEDGE_LATEST_SIGNALS.csv", SIGNALS_URL)
@@ -685,6 +713,9 @@ def home():
             universe_label=universe_label,
             latest=latest,
             data=data,
+            best_limit=best_limit,
+            open_limit=open_limit,
+            near_limit=near_limit,
         )
 
     except Exception as exc:
