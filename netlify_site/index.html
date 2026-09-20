@@ -33,6 +33,7 @@ body{
 }
 body.mode-clean{--mode-accent:#52b7ff;--mode-accent2:#80e7ff;--mode-rgb:82,183,255}
 body.mode-premium{--mode-accent:#f4c55c;--mode-accent2:#ff8ad8;--mode-rgb:244,197,92}
+body.mode-premiumplus{--mode-accent:#e9bd58;--mode-accent2:#ffe29a;--mode-rgb:233,189,88}
 body:after{
   content:"";position:fixed;inset:auto -12vw -28vh auto;width:52vw;height:52vw;z-index:-2;
   border-radius:50%;background:radial-gradient(circle,rgba(var(--mode-rgb),.12),transparent 63%);
@@ -87,7 +88,7 @@ h1{font-size:clamp(34px,5vw,58px);letter-spacing:-.05em;line-height:.98;margin:9
 .tag{padding:8px 11px;border-radius:999px;font-size:10px;font-weight:850;color:#b7c8d8;background:#0b1a29;border:1px solid #274057}
 .tag.live{color:var(--accent2);border-color:rgba(var(--accent-rgb),.38);background:rgba(var(--accent-rgb),.07)}
 .modebar{
-  margin:18px 0 12px;padding:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  margin:18px 0 12px;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
   background:rgba(7,15,25,.9);border:1px solid #20344a;border-radius:17px
 }
 .mode{
@@ -264,6 +265,10 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
       <span class="name">03 · Premium Clean</span>
       <span class="note">Highest recovery quality. Fewer setups, stronger historical hit rate.</span>
     </button>
+    <button class="mode" data-mode="PREMIUMPLUS">
+      <span class="name">04 · Premium+ V1</span>
+      <span class="note">76.97% historical win rate · frozen V1 confirmation.</span>
+    </button>
   </div>
 
   <div class="filters"><div class="chips" id="chips"></div></div>
@@ -330,7 +335,8 @@ const BASE='https://raw.githubusercontent.com/adesh-dhandre/fibedge786/master/';
 const URLS={
   signals:BASE+'FIBEDGE_LATEST_SIGNALS.csv',
   opp:BASE+'FIBEDGE_BEST_OPPORTUNITIES_V3.csv',
-  map:'./STOCK_UNIVERSE_MAPPING.csv'
+  map:'./STOCK_UNIVERSE_MAPPING.csv',
+  premiumPlus:BASE+'archive/premium_v1/data/premium_plus_candidates.json'
 };
 
 const FILTERS=[
@@ -343,12 +349,13 @@ const FILTERS=[
   {key:'MICROCAP250',label:'Microcap 250'}
 ];
 
-let DATA={signals:[],opp:[],map:[]};
+let DATA={signals:[],opp:[],map:[],premiumPlus:{candidates:[]}};
 let selected='ALL',mode='CLASSIC',openLimit=24,watchLimit=100,qualityLimit=20;
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function parseCSV(text){const rows=[];let row=[],field='',q=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(q){if(c==='"'&&n==='"'){field+='"';i++}else if(c==='"'){q=false}else field+=c}else{if(c==='"')q=true;else if(c===','){row.push(field);field=''}else if(c==='\n'){row.push(field);rows.push(row);row=[];field=''}else if(c!=='\r')field+=c}}if(field.length||row.length){row.push(field);rows.push(row)}const head=rows.shift()||[];return rows.filter(r=>r.some(x=>x!=='')).map(r=>Object.fromEntries(head.map((h,i)=>[h.trim(),r[i]??''])))} 
 async function fetchCSV(url){const sep=url.includes('?')?'&':'?';const r=await fetch(url+sep+'t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('Could not load '+url.split('/').pop()+' ('+r.status+')');return parseCSV((await r.text()).replace(/^\uFEFF/,''))}
+async function fetchJSON(url){const sep=url.includes('?')?'&':'?';const r=await fetch(url+sep+'t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('Could not load Premium+ data');return r.json()}
 function sym(v){return String(v||'').replace('.NS','').trim().toUpperCase()}
 function num(v,d=2){const x=Number(v);return Number.isFinite(x)?x.toFixed(d):'-'}
 function pct(v,plus=false){const x=Number(v);if(!Number.isFinite(x))return '-';return(plus&&x>0?'+':'')+x.toFixed(2)+'%'}
@@ -393,11 +400,21 @@ function previewCards(rows,premium){
 function previewSection(title,desc,count,html,cls){
   return '<div class="section '+(cls||'')+'"><div class="head"><div class="titlewrap"><div class="title">'+esc(title)+'</div><div class="desc">'+esc(desc)+'</div></div><div class="count">'+count+'</div></div>'+html+'</div>';
 }
+
+function renderPremiumPlusView(){
+  const rows=[...(DATA.premiumPlus?.candidates||[])];
+  const set=currentFilterSet();
+  const xs=set?rows.filter(r=>set.has(sym(r.symbol))):rows;
+  const card=xs.length?'<div class="previewgrid">'+xs.map((r,i)=>'<div class="pcard" style="animation-delay:'+(i*35)+'ms"><div class="pcardhead"><div class="pcardsym">'+esc(sym(r.symbol))+'</div><div class="pcardbadge">CONFIRMED</div></div><div class="pprice">₹'+esc(num(r.close))+'</div><div class="pmetrics"><div class="pmetric"><span>Entry 0.786</span><b>'+esc(num(r.fib_0786))+'</b></div><div class="pmetric"><span>Stop</span><b>'+esc(num(r.sl))+'</b></div><div class="pmetric"><span>Target</span><b>'+esc(num(r.target))+'</b></div><div class="pmetric"><span>Decline</span><b>'+esc(num(r.decline_pct))+'%</b></div><div class="pmetric"><span>Swing</span><b>'+esc(r.swing_days||'-')+'d</b></div><div class="pmetric"><span>Lower Wick</span><b>'+esc(num(r.lower_wick_pct))+'%</b></div><div class="pmetric"><span>Compression</span><b>'+esc(num(r.compression_3v10))+'</b></div><div class="pmetric"><span>Close above 0.786</span><b>'+esc(pct(r.close_vs_786_pct,true))+'</b></div></div></div>').join('')+'</div>':'<div class="empty"><b>No Premium+ setup today.</b><br><br>Waiting for frozen V1 confirmation after a completed daily candle.</div>';
+  document.getElementById('modeContent').innerHTML='<div class="previewtop"><div><h2>Premium+ V1</h2><p>Behavior-confirmed setup. 234 wins from 304 resolved historical trades.</p></div><span class="pill">76.97% HISTORICAL WIN RATE</span></div><div class="previewalert">Historical result, not guaranteed future accuracy. Signal only after a completed daily candle; candidate entry is next session.</div>'+previewSection('Premium+ Confirmed','Only fully confirmed Premium+ V1 candidates.',xs.length,card,'section-best');
+}
+
 function renderModeView(){
   const classic=document.getElementById('classicArea'),pending=document.getElementById('modePending');
   if(mode==='CLASSIC'){classic.style.display='block';pending.style.display='none';render();return}
 
   classic.style.display='none';pending.style.display='block';
+  if(mode==='PREMIUMPLUS'){renderPremiumPlusView();return}
   let rows=cleanPreviewRows();
   const premium=mode==='PREMIUM';
 
@@ -451,7 +468,7 @@ function renderChips(){const box=document.getElementById('chips');box.innerHTML=
 function latestLabel(rows){const ds=rows.map(r=>new Date(r['Price Time'])).filter(d=>!isNaN(d));if(!ds.length)return'Unavailable';const d=new Date(Math.max(...ds.map(x=>x.getTime())));return d.toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})}
 function renderSearch(sig){const q=document.getElementById('searchInput').value.trim().toUpperCase(),sec=document.getElementById('searchSection');if(!q){sec.style.display='none';return}const rs=sig.filter(r=>sym(r.Symbol).includes(q)).map(signalRow);sec.style.display='block';document.getElementById('searchDesc').textContent=q;document.getElementById('searchCount').textContent=rs.length;document.getElementById('searchRows').innerHTML=table(rs,'search')}
 function render(){if(mode!=='CLASSIC')return;const page=document.getElementById('page'),err=document.getElementById('error');page.classList.add('loading');err.style.display='none';try{const sig=filtered(DATA.signals),opp=filtered(DATA.opp);const od=sig.filter(r=>r.Status==='OPEN').sort(byAbsDistance);const nd=sig.filter(r=>r.Status==='NEAR 0.786').sort(byDistance);const wd=sig.filter(r=>r.Status==='WAITING FOR 0.786');const ww=wd.filter(r=>Number(r['Distance %'])<=10).sort(byDistance);const strong=opp.filter(r=>['ELITE NOW','STRONG NOW'].includes(r.Opportunity));const good=opp.filter(r=>r.Opportunity==='GOOD');const qw=opp.filter(r=>r.Opportunity==='WATCH');document.getElementById('latest').textContent=latestLabel(sig);document.getElementById('total').textContent=sig.length;document.getElementById('openN').textContent=od.length;document.getElementById('nearN').textContent=nd.length;document.getElementById('waitN').textContent=wd.length;document.getElementById('strongN').textContent=strong.length;document.getElementById('goodNTop').textContent=good.length;document.getElementById('qwatchN').textContent=qw.length;document.getElementById('strongRows').innerHTML=strongCards(strong.map(qualityRow));document.getElementById('openCount').textContent=od.length;document.getElementById('openRows').innerHTML=cards(od.slice(0,openLimit).map(signalRow),'OPEN');document.getElementById('nearCount').textContent=nd.length;document.getElementById('nearRows').innerHTML=cards(nd.map(signalRow),'NEAR ENTRY');document.getElementById('watchCount').textContent=ww.length;document.getElementById('watchRows').innerHTML=table(ww.slice(0,watchLimit).map(signalRow),'watch');document.getElementById('goodCount').textContent=good.length;document.getElementById('goodRows').innerHTML=table(good.slice(0,qualityLimit).map(qualityRow),'quality');if(od.length>openLimit)btn('openLoad','Load More Open Signals',()=>{openLimit+=24;render()});else clearBtn('openLoad');if(ww.length>watchLimit)btn('watchLoad','Load More Watchlist Stocks',()=>{watchLimit+=100;render()});else clearBtn('watchLoad');if(good.length>qualityLimit)btn('goodLoad','Load More Good Setups',()=>{qualityLimit+=20;render()});else clearBtn('goodLoad');renderSearch(sig)}catch(e){err.textContent=e.message||String(e);err.style.display='block'}finally{page.classList.remove('loading')}}
-async function loadAll(silent=false){const err=document.getElementById('error');if(!silent)document.getElementById('latest').textContent='Loading…';try{const[signals,opp,map]=await Promise.all([fetchCSV(URLS.signals),fetchCSV(URLS.opp),fetchCSV(URLS.map)]);DATA={signals,opp,map};renderChips();renderModeView()}catch(e){err.textContent='Data load failed: '+(e.message||e);err.style.display='block';document.getElementById('latest').textContent='Unavailable'}}
+async function loadAll(silent=false){const err=document.getElementById('error');if(!silent)document.getElementById('latest').textContent='Loading…';try{const[signals,opp,map,premiumPlus]=await Promise.all([fetchCSV(URLS.signals),fetchCSV(URLS.opp),fetchCSV(URLS.map),fetchJSON(URLS.premiumPlus).catch(()=>({candidates:[]}))]);DATA={signals,opp,map,premiumPlus};renderChips();renderModeView()}catch(e){err.textContent='Data load failed: '+(e.message||e);err.style.display='block';document.getElementById('latest').textContent='Unavailable'}}
 document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();render()});
 const q=new URLSearchParams(location.search).get('universe');
 if(FILTERS.some(x=>x.key===String(q||'').toUpperCase()))selected=String(q).toUpperCase();
