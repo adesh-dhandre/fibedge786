@@ -251,6 +251,19 @@ def main():
                 rsuffix="_SIM",
             )
 
+            # IMPORTANT: trades already contains the original V1 Outcome.
+            # The join therefore names the newly simulated columns
+            # Outcome_SIM / Exit Date_SIM / Hold Days_SIM.
+            # V4 must score the NEW exit geometry, not the old 1.260 outcome.
+            base["Outcome"] = base["Outcome_SIM"]
+            base["Exit Date"] = base["Exit Date_SIM"]
+            base["Hold Days"] = base["Hold Days_SIM"]
+            base.drop(
+                columns=["Outcome_SIM", "Exit Date_SIM", "Hold Days_SIM"],
+                inplace=True,
+                errors="ignore",
+            )
+
             rr = reward_risk(stop_fib, target_fib)
             be = breakeven_wr(rr)
 
