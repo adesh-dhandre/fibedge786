@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07111f">
-<title>FibEdge 786 — Dashboard V2 Preview</title>
+<title>FibEdge 786 — Dashboard V2</title>
 <style>
 *{box-sizing:border-box}
 :root{
@@ -164,6 +164,32 @@ h1{font-size:clamp(34px,5vw,58px);letter-spacing:-.05em;line-height:.98;margin:9
 .search{display:flex;gap:9px;padding:10px;margin:0 0 29px;border-radius:14px;background:#081522;border:1px solid #21374d}
 .search input{flex:1;min-width:0;padding:12px 13px;border-radius:10px;background:#050f19;color:#fff;border:1px solid #2a435b;font-size:13px}
 .search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.08)}
+.scanpanel{
+  display:grid;grid-template-columns:minmax(190px,230px) 1fr;gap:12px;align-items:stretch;
+  margin:0 0 18px;padding:12px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(var(--mode-rgb),.09),#081522 62%);
+  border:1px solid rgba(var(--mode-rgb),.28);box-shadow:0 12px 32px rgba(0,0,0,.16)
+}
+.scanbutton{
+  min-height:58px;border:1px solid rgba(var(--mode-rgb),.62);border-radius:13px;
+  padding:0 18px;background:linear-gradient(135deg,rgba(var(--mode-rgb),.34),rgba(var(--mode-rgb),.12));
+  color:var(--mode-accent2);font-weight:950;font-size:12px;letter-spacing:.01em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:0 10px 26px rgba(var(--mode-rgb),.10),inset 0 1px 0 rgba(255,255,255,.04);
+  transition:.18s ease
+}
+.scanbutton:before{content:"↻";font-size:18px;line-height:1}
+.scanbutton:hover{transform:translateY(-1px);border-color:var(--mode-accent2);box-shadow:0 14px 30px rgba(var(--mode-rgb),.14)}
+.scanbutton.busy{opacity:.72;cursor:wait;transform:none}.scanbutton.busy:before{animation:scanSpin 1s linear infinite}
+.scanbutton.done{border-color:rgba(57,230,157,.72);box-shadow:0 0 0 2px rgba(57,230,157,.10) inset}
+.scanmeta{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.scanbox{min-width:0;padding:10px 12px;border-radius:12px;background:#06111c;border:1px solid #1d3348}
+.scanlabel{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.10em;color:#6f879d;font-weight:900}
+.scanvalue{display:block;margin-top:5px;font-size:13px;color:#dce9f4;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scanvalue.live{color:var(--mode-accent2)}
+.scannote{grid-column:1/-1;font-size:9px;color:#71879a;line-height:1.4;padding:1px 2px 0}
+@keyframes scanSpin{to{transform:rotate(360deg)}}
+@media(max-width:720px){.scanpanel{grid-template-columns:1fr}.scanmeta{grid-template-columns:1fr 1fr}}
 .primary,.load{
   border:1px solid rgba(var(--accent-rgb),.4);border-radius:10px;
   padding:11px 16px;background:linear-gradient(135deg,rgba(var(--accent-rgb),.35),rgba(var(--accent-rgb),.12));
@@ -236,7 +262,7 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
 <div class="nav">
   <div class="navin">
     <div class="brand"><div class="brandmark">F</div><span>FibEdge <b>786</b></span></div>
-    <div class="navmeta">NSE setup intelligence<br><strong>GitHub data • auto refresh</strong></div>
+    <div class="navmeta">NSE setup intelligence<br><strong>GitHub data • manual scan</strong></div>
   </div>
 </div>
 
@@ -244,7 +270,7 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
   <section class="hero">
     <div class="eyebrow">Fibonacci setup intelligence</div>
     <h1>Cleaner setups.<br>Faster decisions.</h1>
-    <p>Five separate FibEdge views for the original scanner, clean swings, premium recovery structures, and confirmed continuation research. Use the scanner to narrow the market, then confirm the chart manually.</p>
+    <p>Five separate FibEdge views for the original scanner, clean swings, premium recovery structures, and confirmed continuation setups. Use the scanner to narrow the market, then confirm the chart manually.</p>
     <div class="herofoot">
       <span class="tag live">LIVE DASHBOARD</span>
       <span class="tag">0.786 ENTRY ZONE</span>
@@ -283,6 +309,14 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
 
   <div id="classicArea">
     <div class="fresh"><span>Latest timestamp: <b id="latest">Loading…</b></span><span>Universe: <b id="universeLabel">All</b></span></div>
+    <div class="scanpanel" data-scan-strategy="CLASSIC">
+      <button class="scanbutton" type="button" onclick="requestScan('CLASSIC',this)">Run Classic Scan</button>
+      <div class="scanmeta">
+        <div class="scanbox"><span class="scanlabel">Scan status</span><b class="scanvalue scan-state live">Ready</b></div>
+        <div class="scanbox"><span class="scanlabel">Scan time</span><b class="scanvalue scan-duration">—</b></div>
+        <div class="scannote">Manual on demand · no automatic schedule</div>
+      </div>
+    </div>
 
     <div class="stats">
       <div class="stat"><div class="lab">Stocks Scanned</div><div class="num" id="total">—</div><small>Current universe</small></div>
@@ -412,7 +446,146 @@ function renderPremiumPlusView(){
   const set=currentFilterSet();
   const xs=set?rows.filter(r=>set.has(sym(r.symbol))):rows;
   const card=xs.length?'<div class="previewgrid">'+xs.map((r,i)=>'<div class="pcard" style="animation-delay:'+(i*35)+'ms"><div class="pcardhead"><div class="pcardsym">'+esc(sym(r.symbol))+'</div><div class="pcardbadge">CONFIRMED</div></div><div class="pprice">₹'+esc(num(r.close))+'</div><div class="pmetrics"><div class="pmetric"><span>Entry 0.786</span><b>'+esc(num(r.fib_0786))+'</b></div><div class="pmetric"><span>Stop</span><b>'+esc(num(r.sl))+'</b></div><div class="pmetric"><span>Target</span><b>'+esc(num(r.target))+'</b></div><div class="pmetric"><span>Decline</span><b>'+esc(num(r.decline_pct))+'%</b></div><div class="pmetric"><span>Swing</span><b>'+esc(r.swing_days||'-')+'d</b></div><div class="pmetric"><span>Lower Wick</span><b>'+esc(num(r.lower_wick_pct))+'%</b></div><div class="pmetric"><span>Compression</span><b>'+esc(num(r.compression_3v10))+'</b></div><div class="pmetric"><span>Close above 0.786</span><b>'+esc(pct(r.close_vs_786_pct,true))+'</b></div></div></div>').join('')+'</div>':'<div class="empty"><b>No Premium+ setup today.</b><br><br>Waiting for frozen V1 confirmation after a completed daily candle.</div>';
-  document.getElementById('modeContent').innerHTML='<div class="previewtop"><div><h2>Premium+ V1</h2><p>Behavior-confirmed setup. 234 wins from 304 resolved historical trades.</p></div><span class="pill">76.97% HISTORICAL WIN RATE</span></div><div class="previewalert">Historical result, not guaranteed future accuracy. Signal only after a completed daily candle; candidate entry is next session.</div>'+previewSection('Premium+ Confirmed','Only fully confirmed Premium+ V1 candidates.',xs.length,card,'section-best');
+  const ppLast=DATA.premiumPlus?.scan_finished_at_ist||DATA.premiumPlus?.updated_at||null;
+  document.getElementById('modeContent').innerHTML='<div class="previewtop"><div><h2>Premium+ V1</h2><p>Behavior-confirmed setup. 234 wins from 304 resolved historical trades.</p></div><span class="pill">76.97% HISTORICAL WIN RATE</span></div>'+scanControl('PREMIUMPLUS','Premium+','Last scan: '+fmtScanIST(ppLast))+'<div class="previewalert">Historical result, not guaranteed future accuracy. Signal only after a completed daily candle; candidate entry is next session.</div>'+previewSection('Premium+ Confirmed','Only fully confirmed Premium+ V1 candidates.',xs.length,card,'section-best');
+}
+
+function fmtScanIST(v){
+  if(!v)return 'Not scanned yet';
+  const d=new Date(v);
+  if(isNaN(d))return String(v);
+  return d.toLocaleString('en-IN',{
+    timeZone:'Asia/Kolkata',
+    day:'2-digit',month:'short',year:'numeric',
+    hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true
+  })+' IST';
+}
+async function scanAuth(){
+  const password=window.prompt('Enter FibEdge scan password');
+  if(password===null||password==='')return false;
+  const r=await fetch('/.netlify/functions/scan-auth',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({password})
+  });
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok){
+    window.alert(data.error||'Scan authorization failed.');
+    return false;
+  }
+  return true;
+}
+
+function scanPanelParts(strategy){
+  const panel=document.querySelector('.scanpanel[data-scan-strategy="'+strategy+'"]');
+  return panel?{panel,state:panel.querySelector('.scan-state'),duration:panel.querySelector('.scan-duration')}:{panel:null,state:null,duration:null};
+}
+function fmtDuration(seconds){
+  const x=Math.max(0,Math.round(Number(seconds)||0));
+  if(x<60)return x+' sec';
+  return Math.floor(x/60)+' min '+String(x%60).padStart(2,'0')+' sec';
+}
+function setScanState(strategy,text){
+  const p=scanPanelParts(strategy);
+  if(p.state){p.state.textContent=text;p.state.classList.add('live')}
+}
+function setScanDuration(strategy,seconds){
+  const p=scanPanelParts(strategy);
+  if(p.duration)p.duration.textContent=fmtDuration(seconds);
+}
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+async function pollScanStatus(strategy,requestId,startedMs){
+  const deadline=startedMs+20*60*1000;
+  while(Date.now()<deadline){
+    const r=await fetch('/.netlify/functions/scan-status?request_id='+encodeURIComponent(requestId),{cache:'no-store'});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||'Could not read scan status.');
+    if(data.status==='queued')setScanState(strategy,'Queued');
+    else if(data.status==='in_progress')setScanState(strategy,'Running…');
+    else if(data.status==='waiting')setScanState(strategy,'Starting…');
+    else if(data.status==='completed'){
+      setScanDuration(strategy,data.duration_seconds??((Date.now()-startedMs)/1000));
+      return data;
+    }
+    await sleep(2500);
+  }
+  throw new Error('Scan is still running. Check GitHub Actions.');
+}
+async function requestScan(strategy,button){
+  const original=button?button.textContent:'Scan Now';
+  const startedMs=Date.now();
+  let timer=null;
+  if(button){
+    button.disabled=true;
+    button.classList.add('busy');
+    button.textContent='Starting Scan…';
+  }
+  setScanState(strategy,'Starting…');
+  setScanDuration(strategy,0);
+  timer=setInterval(()=>setScanDuration(strategy,(Date.now()-startedMs)/1000),1000);
+
+  async function trigger(){
+    return fetch('/.netlify/functions/scan',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({strategy})
+    });
+  }
+
+  try{
+    let r=await trigger();
+    if(r.status===401){
+      const ok=await scanAuth();
+      if(!ok)throw new Error('Scan authorization cancelled.');
+      r=await trigger();
+    }
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||'Could not start scan.');
+    if(!data.request_id)throw new Error('Scan started without a tracking ID.');
+
+    setScanState(strategy,'Queued');
+    if(button)button.textContent='Scan Running…';
+
+    const result=await pollScanStatus(strategy,data.request_id,startedMs);
+    clearInterval(timer);timer=null;
+
+    if(result.conclusion==='success'){
+      setScanState(strategy,'Completed ✓');
+      if(button){
+        button.classList.remove('busy');
+        button.classList.add('done');
+        button.textContent='Scan Complete ✓';
+      }
+      await sleep(2500);
+      await loadAll(true);
+    }else{
+      throw new Error('GitHub scan finished with status: '+(result.conclusion||'failed'));
+    }
+  }catch(e){
+    setScanState(strategy,'Failed');
+    window.alert(e.message||String(e));
+  }finally{
+    if(timer)clearInterval(timer);
+    if(button){
+      button.disabled=false;
+      button.classList.remove('busy');
+      setTimeout(()=>{
+        button.classList.remove('done');
+        button.textContent=original;
+      },4000);
+    }
+  }
+}
+
+function scanControl(strategy,label,lastText){
+  return '<div class="scanpanel" data-scan-strategy="'+esc(strategy)+'">'+
+    '<button class="scanbutton" type="button" onclick="requestScan(\''+strategy+'\',this)">Run '+esc(label)+' Scan</button>'+
+    '<div class="scanmeta">'+
+      '<div class="scanbox"><span class="scanlabel">Scan status</span><b class="scanvalue scan-state live">Ready</b></div>'+
+      '<div class="scanbox"><span class="scanlabel">Scan time</span><b class="scanvalue scan-duration">—</b></div>'+
+      '<div class="scannote">'+esc(lastText||'Manual on demand')+' · Manual scan only</div>'+
+    '</div>'+
+  '</div>';
 }
 
 function renderStrategy05View(){
@@ -421,7 +594,8 @@ function renderStrategy05View(){
   const xs=set?rows.filter(r=>set.has(sym(r.symbol))):rows;
   const hist126=DATA.strategy05?.historical_research?.primary_1260||{};
   const hist150=DATA.strategy05?.historical_research?.extension_1500||{};
-  const updated=DATA.strategy05?.market_date||DATA.strategy05?.updated_at||'Waiting for first refresh';
+  const marketDate=DATA.strategy05?.market_date||'Waiting';
+  const lastScan=DATA.strategy05?.scan_finished_at_ist||DATA.strategy05?.updated_at||null;
 
   const card=xs.length?'<div class="previewgrid">'+xs.map((r,i)=>
     '<div class="pcard" style="animation-delay:'+(i*35)+'ms">'+
@@ -447,12 +621,13 @@ function renderStrategy05View(){
       '<div class="pstat"><div class="lab">Primary 1.260</div><b>'+esc(num(hist126.win_rate_pct))+'%</b><div class="pmeta">'+esc(hist126.resolved_trades||1060)+' resolved historical trades</div></div>'+
       '<div class="pstat"><div class="lab">Extension 1.500</div><b>'+esc(num(hist150.win_rate_pct))+'%</b><div class="pmeta">'+esc(hist150.resolved_trades||1023)+' resolved historical trades</div></div>'+
       '<div class="pstat"><div class="lab">Confirmed Today</div><b>'+xs.length+'</b><div class="pmeta">Completed daily candles only</div></div>'+
-      '<div class="pstat"><div class="lab">Feed Date</div><b style="font-size:14px;margin-top:10px">'+esc(String(updated).slice(0,10))+'</b><div class="pmeta">Next-session setup</div></div>'+
+      '<div class="pstat"><div class="lab">Market Date</div><b style="font-size:14px;margin-top:10px">'+esc(marketDate)+'</b><div class="pmeta">Completed daily candle</div></div>'+
     '</div>';
 
   document.getElementById('modeContent').innerHTML=
-    '<div class="previewtop"><div><h2>Confirmed Continuation</h2><p>Strong continuation after Fib 0.786. A setup is confirmed only after the daily candle closes at least 4% above 0.786 with a body at least 60% of the candle range.</p></div><span class="pill">STRATEGY 05 · RESEARCH CONFIRMED</span></div>'+
-    '<div class="previewalert"><b>Execution timing:</b> confirmation uses the completed daily candle and the setup is evaluated from the next session. Historical research is not a guarantee of future results. Actual next-session fill and executable reward/risk still require the final execution audit.</div>'+
+    '<div class="previewtop"><div><h2>Confirmed Continuation</h2><p>Strong continuation after Fib 0.786. A setup is confirmed only after the daily candle closes at least 4% above 0.786 with a body at least 60% of the candle range.</p></div><span class="pill">STRATEGY 05 · LIVE</span></div>'+
+    scanControl('STRATEGY05','Strategy 05','Last EOD scan: '+fmtScanIST(lastScan))+
+    '<div class="previewalert"><b>Scan policy:</b> Manual only. For completed-daily strategies, scans before 3:40 PM IST ignore the current partial daily candle and use only the last completed daily candle.</div>'+
     stats+
     previewSection('Confirmed Continuation Signals','Same confirmation supports the 1.260 primary target and the 1.500 extension target.',xs.length,card,'section-best');
 }
@@ -484,20 +659,21 @@ function renderModeView(){
   hist=hist.sort((a,b)=>(Number(b['Quality Score'])||0)-(Number(a['Quality Score'])||0)).slice(0,20);
 
   const mappingWarn=mapPreviewWarning()
-    ?'<div class="previewalert"><b>'+esc(uni)+'</b> button is visible for layout testing, but its exact constituent mapping is not wired into this preview yet. For now this mode shows the full candidate pool. We will connect the exact NIFTY 500 / MidSmall 400 mapping before production.</div>'
+    ?'<div class="previewalert"><b>'+esc(uni)+'</b> constituent mapping is not available in this live source yet, so this mode shows the full candidate pool. We will connect the exact NIFTY 500 / MidSmall 400 mapping before production.</div>'
     :'';
 
   const modeTitle=premium?'Premium Clean':'Clean Swings';
   const modeText=premium
-    ?'Full Premium workspace with every section separated exactly like Classic. Exact Recovery Efficiency ≥ 0.94 data feed will replace the preview ranking before production.'
-    :'Full Clean Swing workspace with every section separated exactly like Classic. The dedicated dominant-high clean-swing feed will replace this preview data before production.';
-  const pill=premium?'PREMIUM MODE · LOCAL PREVIEW':'CLEAN MODE · LOCAL PREVIEW';
+    ?'Premium workspace using the current shared FibEdge source and historical-quality ranking. The dedicated Recovery Efficiency ≥ 0.94 feed is not yet separated in the live source.'
+    :'Clean Swing workspace using the current shared FibEdge source. The dedicated dominant-high Clean feed is not yet separated in the live source.';
+  const pill=premium?'PREMIUM MODE · LIVE SOURCE':'CLEAN MODE · LIVE SOURCE';
   const note=premium
-    ?'Design preview only: these cards are not yet being claimed as Recovery Efficiency ≥ 0.94 signals.'
-    :'Design preview: current live FibEdge stocks are filtered by 20%+ decline and 40+ swing days where available.';
+    ?'Live source view: these cards are not being claimed as exact Recovery Efficiency ≥ 0.94 signals.'
+    :'Live source view: current FibEdge stocks are filtered by 20%+ decline and 40+ swing days where available.';
 
   const html=
     '<div class="previewtop"><div><h2>'+modeTitle+'</h2><p>'+modeText+'</p></div><span class="pill">'+pill+'</span></div>'+
+    scanControl(mode,modeTitle,'Latest source data: '+latestLabel(DATA.signals))+
     '<div class="previewalert">'+note+'</div>'+mappingWarn+
     '<div class="previewstats">'+
       '<div class="pstat"><div class="lab">Candidates</div><b>'+rows.length+'</b></div>'+
