@@ -38,7 +38,8 @@ jobs:
       # Upstash Redis cache. If absent, the scanner falls back to SQLite.
       UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
       UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-      FIBEDGE_YF_BATCH_SIZE: "125"
+      FIBEDGE_YF_BATCH_SIZE: "300"
+      FIBEDGE_YF_WORKERS: "4"
 
     steps:
       - name: Checkout repository
