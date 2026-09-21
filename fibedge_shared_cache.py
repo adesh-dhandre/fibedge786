@@ -4,7 +4,7 @@ import os
 import sqlite3
 import time
 import zlib
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -444,9 +444,10 @@ def _download_batches(symbols, period):
     frames = {}
     failed = []
 
-    # Parallelize only across a few large batches. Yahoo still handles symbol
-    # threads inside each batch, so this is deliberately bounded.
-    with ThreadPoolExecutor(max_workers=workers) as pool:
+    # Use separate worker processes so concurrent yfinance downloads do not
+    # share yfinance's module-level download state. Each worker still uses
+    # yfinance's internal symbol threads, and concurrency stays bounded.
+    with ProcessPoolExecutor(max_workers=workers) as pool:
         futures = {
             pool.submit(_download_one_batch, batch, period, i + 1, total): i
             for i, batch in enumerate(batches)
@@ -609,10 +610,15 @@ def completed_daily(df, settle_hour=15, settle_minute=40):
         return df
 
     current = now_ist()
+
+    # Cached frames are already normalized and sorted. After the settle
+    # buffer there is nothing to copy/filter/sort, which matters when this
+    # function is called for ~2,300 stocks.
+    if (current.hour, current.minute) >= (settle_hour, settle_minute):
+        return df
+
     today = pd.Timestamp(current.date())
-    out = df.copy()
-
-    if (current.hour, current.minute) < (settle_hour, settle_minute):
-        out = out[out["Date"].dt.normalize() < today]
-
-    return out.sort_values("Date").reset_index(drop=True)
+    return (
+        df[df["Date"].dt.normalize() < today]
+        .reset_index(drop=True)
+    )
