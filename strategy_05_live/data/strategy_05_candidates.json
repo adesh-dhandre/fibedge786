@@ -1,8 +1,17 @@
 {
   "strategy": "FibEdge Confirmed Continuation",
-  "updated_at": "2026-09-21T17:12:40.796572+00:00",
+  "updated_at": "2026-09-22T02:57:25.343707+05:30",
+  "scan_started_at_ist": "2026-09-22T02:57:23.021004+05:30",
+  "scan_finished_at_ist": "2026-09-22T02:57:25.343707+05:30",
   "market_date": "2026-09-21",
-  "candidate_count": 1,
+  "candidate_count": 2,
+  "cache_window": "1y",
+  "scan_policy": {
+    "automatic": "once after market close",
+    "manual": "shared cache; completed daily candle only",
+    "market_close_ist": "15:30",
+    "daily_settle_buffer_ist": "15:40"
+  },
   "frozen_rule": {
     "fib_entry": 0.786,
     "fib_stop": 0.5,
@@ -26,6 +35,31 @@
     }
   },
   "candidates": [
+    {
+      "symbol": "SRHHYPOLTD.NS",
+      "signal_date": "2026-09-21",
+      "close": 627.7000122070312,
+      "open": 525.0,
+      "high": 627.7000122070312,
+      "low": 519.7999877929688,
+      "fib_0786": 569.1143082885742,
+      "sl": 501.1750030517578,
+      "target_126": 681.7130169677735,
+      "target_150": 738.7250213623047,
+      "close_vs_786_pct": 10.294189245502272,
+      "body_pct_range": 95.18071266872342,
+      "candle_direction": "BULLISH",
+      "decline_pct": 38.31760845763439,
+      "swing_days": 188,
+      "recovery_days": 175,
+      "rsi14": 77.4060492041826,
+      "high_date": "2025-09-23",
+      "swing_high": 619.9500122070312,
+      "low_date": "2026-03-30",
+      "swing_low": 382.3999938964844,
+      "signal_timing": "after completed daily candle",
+      "entry_timing": "next session"
+    },
     {
       "symbol": "SHADOWFAX.NS",
       "signal_date": "2026-09-21",
