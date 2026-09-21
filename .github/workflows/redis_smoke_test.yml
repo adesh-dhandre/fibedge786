@@ -1,0 +1,53 @@
+name: Redis Smoke Test
+
+on:
+  push:
+    branches:
+      - strategy-05-many-trades
+    paths:
+      - ".github/workflows/redis_smoke_test.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  redis-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      FIBEDGE_CACHE_BACKEND: "redis"
+      FIBEDGE_YF_BATCH_SIZE: "300"
+      FIBEDGE_YF_WORKERS: "4"
+
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy yfinance requests
+
+      - name: Verify Redis connection
+        run: |
+          python - <<'PY'
+          from fibedge_shared_cache import get_cache
+          cache, backend = get_cache()
+          print("Backend:", backend)
+          cache.set_meta("github_smoke_test", "ok")
+          print("Redis test:", cache.get_meta("github_smoke_test"))
+          assert backend == "redis"
+          assert cache.get_meta("github_smoke_test") == "ok"
+          PY
+
+      - name: Run Premium+ fast scanner
+        run: |
+          python fibedge_fast_scan.py PREMIUMPLUS
