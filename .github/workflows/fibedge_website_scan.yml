@@ -1,0 +1,83 @@
+name: FibEdge Website Scan
+run-name: "FibEdge ${{ inputs.strategy }} · ${{ inputs.request_id || 'manual' }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      strategy:
+        description: "Section to scan"
+        required: true
+        default: "ALL"
+        type: choice
+        options:
+          - ALL
+          - CLASSIC
+          - CLEAN
+          - PREMIUM
+          - PREMIUMPLUS
+          - STRATEGY05
+      request_id:
+        description: "Tracking ID supplied by the website"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fibedge-website-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      FIBEDGE_YF_BATCH_SIZE: "300"
+      FIBEDGE_YF_WORKERS: "4"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy yfinance requests
+
+      - name: Run shared cached fast scan
+        run: |
+          python fibedge_fast_scan.py "${{ inputs.strategy }}"
+
+      - name: Publish scan results
+        run: |
+          git config user.name "FibEdge Bot"
+          git config user.email "fibedge-bot@users.noreply.github.com"
+
+          git add -f ALL_NSE_CURRENT_SETUPS_V3.csv || true
+          git add -f ALL_NSE_FAILED_SYMBOLS_V3.csv || true
+          git add -f FIBEDGE_LATEST_SIGNALS.csv || true
+          git add -f FIBEDGE_TOP_CURRENT_SETUPS.csv || true
+          git add -f FIBEDGE_BEST_OPPORTUNITIES_V3.csv || true
+          git add -f archive/premium_v1/data/premium_plus_candidates.json || true
+          git add -f archive/premium_v1/data/premium_plus_failed_symbols.csv || true
+          git add -f strategy_05_live/data/strategy_05_candidates.json || true
+          git add -f strategy_05_live/data/strategy_05_failed_symbols.csv || true
+
+          if git diff --cached --quiet; then
+            echo "No scan-data changes."
+          else
+            git commit -m "Website cached scan: ${{ inputs.strategy }}"
+            git pull --rebase origin master
+            git push origin master
+          fi
