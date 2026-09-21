@@ -1,9 +1,8 @@
 import json
 import math
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -27,7 +26,7 @@ FIB_ENTRY = 0.786
 FIB_SL = 0.500
 FIB_TARGET = 1.260
 
-IST = ZoneInfo("Asia/Kolkata")
+IST = timezone(timedelta(hours=5, minutes=30))
 SETTLE_HOUR = 15
 SETTLE_MINUTE = 40
 
