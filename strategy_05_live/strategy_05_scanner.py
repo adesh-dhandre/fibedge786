@@ -1,9 +1,8 @@
 import json
 import math
 import time
-from datetime import datetime, time as dtime
+from datetime import datetime, time as dtime, timezone, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -27,7 +26,7 @@ FIB_TARGET_150 = 1.500
 MIN_CLOSE_ABOVE_786_PCT = 4.0
 MIN_BODY_PCT_RANGE = 60.0
 
-IST = ZoneInfo("Asia/Kolkata")
+IST = timezone(timedelta(hours=5, minutes=30))
 MARKET_CLOSE = dtime(15, 30)
 DAILY_SETTLE_BUFFER = dtime(15, 40)
 
