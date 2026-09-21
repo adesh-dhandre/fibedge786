@@ -1,0 +1,97 @@
+name: FibEdge Website Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      strategy:
+        description: "Section to scan"
+        required: true
+        default: "ALL"
+        type: choice
+        options:
+          - ALL
+          - CLASSIC
+          - CLEAN
+          - PREMIUM
+          - PREMIUMPLUS
+          - STRATEGY05
+
+  schedule:
+    # ONE automatic scan after NSE close: 16:05 IST (10:35 UTC), Mon-Fri.
+    - cron: "35 10 * * 1-5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fibedge-website-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy yfinance requests
+
+      - name: Choose scan
+        id: choose
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "strategy=ALL" >> "$GITHUB_OUTPUT"
+          else
+            echo "strategy=${{ inputs.strategy }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refresh Classic / Clean / Premium source data
+        if: steps.choose.outputs.strategy == 'ALL' || steps.choose.outputs.strategy == 'CLASSIC' || steps.choose.outputs.strategy == 'CLEAN' || steps.choose.outputs.strategy == 'PREMIUM'
+        run: |
+          python fib_price_refresh_v2.py
+          python fibedge_quality_live_merge.py
+          python fibedge_opportunity_rank_v3.py
+
+      - name: Scan Premium+ V1
+        if: steps.choose.outputs.strategy == 'ALL' || steps.choose.outputs.strategy == 'PREMIUMPLUS'
+        run: |
+          python archive/premium_v1/premium_plus_scanner.py
+
+      - name: Scan Strategy 05
+        if: steps.choose.outputs.strategy == 'ALL' || steps.choose.outputs.strategy == 'STRATEGY05'
+        run: |
+          python strategy_05_live/strategy_05_scanner.py
+
+      - name: Publish scan results
+        run: |
+          git config user.name "FibEdge Bot"
+          git config user.email "fibedge-bot@users.noreply.github.com"
+
+          git add -f FIBEDGE_LATEST_SIGNALS.csv || true
+          git add -f FIBEDGE_TOP_CURRENT_SETUPS.csv || true
+          git add -f FIBEDGE_BEST_OPPORTUNITIES_V3.csv || true
+          git add -f archive/premium_v1/data/premium_plus_candidates.json || true
+          git add -f archive/premium_v1/data/premium_plus_failed_symbols.csv || true
+          git add -f strategy_05_live/data/strategy_05_candidates.json || true
+          git add -f strategy_05_live/data/strategy_05_failed_symbols.csv || true
+
+          if git diff --cached --quiet; then
+            echo "No scan-data changes."
+          else
+            git commit -m "Website scan: ${{ steps.choose.outputs.strategy }}"
+            git pull --rebase
+            git push
+          fi
