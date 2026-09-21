@@ -1,8 +1,8 @@
 {
   "strategy": "FibEdge Confirmed Continuation",
-  "updated_at": "2026-09-22T02:57:25.343707+05:30",
-  "scan_started_at_ist": "2026-09-22T02:57:23.021004+05:30",
-  "scan_finished_at_ist": "2026-09-22T02:57:25.343707+05:30",
+  "updated_at": "2026-09-22T03:52:31.059485+05:30",
+  "scan_started_at_ist": "2026-09-22T03:52:28.752260+05:30",
+  "scan_finished_at_ist": "2026-09-22T03:52:31.059485+05:30",
   "market_date": "2026-09-21",
   "candidate_count": 2,
   "cache_window": "1y",
