@@ -18,33 +18,24 @@ JOBS = {}
 
 SCAN_COMMANDS = {
     "CLASSIC": [
-        [sys.executable, "fib_price_refresh_v2.py"],
-        [sys.executable, "fibedge_quality_live_merge.py"],
-        [sys.executable, "fibedge_opportunity_rank_v3.py"],
+        [sys.executable, "fibedge_fast_scan.py", "CLASSIC"],
     ],
     "CLEAN": [
-        [sys.executable, "fib_price_refresh_v2.py"],
-        [sys.executable, "fibedge_quality_live_merge.py"],
-        [sys.executable, "fibedge_opportunity_rank_v3.py"],
+        [sys.executable, "fibedge_fast_scan.py", "CLEAN"],
     ],
     "PREMIUM": [
-        [sys.executable, "fib_price_refresh_v2.py"],
-        [sys.executable, "fibedge_quality_live_merge.py"],
-        [sys.executable, "fibedge_opportunity_rank_v3.py"],
+        [sys.executable, "fibedge_fast_scan.py", "PREMIUM"],
     ],
     "PREMIUMPLUS": [
-        [sys.executable, "archive/premium_v1/premium_plus_scanner.py"],
+        [sys.executable, "fibedge_fast_scan.py", "PREMIUMPLUS"],
     ],
     "STRATEGY05": [
-        [sys.executable, "strategy_05_live/strategy_05_scanner.py"],
+        [sys.executable, "fibedge_fast_scan.py", "STRATEGY05"],
+    ],
+    "ALL": [
+        [sys.executable, "fibedge_fast_scan.py", "ALL"],
     ],
 }
-
-SCAN_COMMANDS["ALL"] = (
-    SCAN_COMMANDS["CLASSIC"]
-    + SCAN_COMMANDS["PREMIUMPLUS"]
-    + SCAN_COMMANDS["STRATEGY05"]
-)
 
 
 def local_index():
