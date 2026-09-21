@@ -73,77 +73,108 @@ def local_index():
     # the scanner scripts directly inside this worktree.
     local_override = r"""
 <script>
-window.requestScan = async function(strategy, button) {
-  const original = button ? button.textContent : 'Scan Now';
-
-  if (button) {
-    button.disabled = true;
-    button.classList.add('busy');
-    button.textContent = 'Starting local scan…';
+(function(){
+  function formatDuration(seconds){
+    const s=Math.max(0,Math.round(Number(seconds)||0));
+    const m=Math.floor(s/60);
+    const r=s%60;
+    if(m<=0)return r+' sec';
+    return m+' min '+String(r).padStart(2,'0')+' sec';
   }
 
-  try {
-    const r = await fetch('/local-scan', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({strategy})
-    });
-    const data = await r.json();
+  function getPanel(strategy){
+    return document.querySelector('[data-scan-strategy="'+strategy+'"]');
+  }
 
-    if (!r.ok) throw new Error(data.error || 'Could not start local scan.');
+  function paint(strategy,state,durationText){
+    const panel=getPanel(strategy);
+    if(!panel)return;
+    const stateEl=panel.querySelector('.scan-state');
+    const durationEl=panel.querySelector('.scan-duration');
+    if(stateEl)stateEl.textContent=state;
+    if(durationEl)durationEl.textContent=durationText;
+  }
 
-    if (button) button.textContent = 'Scanning locally…';
+  window.requestScan = async function(strategy, button) {
+    const original = button ? button.textContent : 'Run Scan';
 
-    const poll = async () => {
-      const sr = await fetch('/local-status?strategy=' + encodeURIComponent(strategy), {
-        cache: 'no-store'
-      });
-      const status = await sr.json();
-
-      if (status.state === 'running') {
-        if (button) {
-          button.textContent = status.step
-            ? 'Scanning · ' + status.step
-            : 'Scanning locally…';
-        }
-        setTimeout(poll, 3000);
-        return;
-      }
-
-      if (status.state === 'done') {
-        if (button) {
-          button.classList.remove('busy');
-          button.classList.add('done');
-          button.textContent = 'Scan Complete ✓';
-        }
-        await loadAll(true);
-        setTimeout(() => {
-          if (button) {
-            button.disabled = false;
-            button.classList.remove('done');
-            button.textContent = original;
-          }
-        }, 3500);
-        return;
-      }
-
-      if (status.state === 'failed') {
-        throw new Error(status.error || 'Local scan failed.');
-      }
-
-      setTimeout(poll, 3000);
-    };
-
-    setTimeout(poll, 1000);
-  } catch (e) {
     if (button) {
-      button.disabled = false;
-      button.classList.remove('busy','done');
-      button.textContent = original;
+      button.disabled = true;
+      button.classList.add('busy');
+      button.textContent = 'Starting scan';
     }
-    alert(e.message || String(e));
-  }
-};
+    paint(strategy,'Starting…','0 sec');
+
+    try {
+      const r = await fetch('/local-scan', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({strategy})
+      });
+      const data = await r.json();
+
+      if (!r.ok) throw new Error(data.error || 'Could not start local scan.');
+
+      const poll = async () => {
+        const sr = await fetch('/local-status?strategy=' + encodeURIComponent(strategy), {
+          cache: 'no-store'
+        });
+        const status = await sr.json();
+
+        if (status.state === 'running') {
+          const step = status.step || 'running';
+          paint(strategy,'Scanning · '+step,formatDuration(status.elapsed_seconds));
+          if (button) button.textContent = 'Scanning…';
+          setTimeout(poll, 1000);
+          return;
+        }
+
+        if (status.state === 'done') {
+          const total = formatDuration(status.duration_seconds);
+          if (button) {
+            button.classList.remove('busy');
+            button.classList.add('done');
+            button.textContent = 'Scan complete ✓';
+          }
+
+          await loadAll(true);
+
+          // Dynamic sections re-render during loadAll(), so paint again after reload.
+          paint(strategy,'Complete',total);
+
+          setTimeout(() => {
+            const freshPanel=getPanel(strategy);
+            const freshButton=freshPanel ? freshPanel.querySelector('.scanbutton') : button;
+            if (freshButton) {
+              freshButton.disabled = false;
+              freshButton.classList.remove('busy','done');
+              freshButton.textContent = original;
+            }
+          }, 3500);
+          return;
+        }
+
+        if (status.state === 'failed') {
+          const total = formatDuration(status.duration_seconds);
+          paint(strategy,'Failed',total);
+          throw new Error(status.error || 'Local scan failed.');
+        }
+
+        setTimeout(poll, 1000);
+      };
+
+      setTimeout(poll, 500);
+    } catch (e) {
+      if (button) {
+        button.disabled = false;
+        button.classList.remove('busy','done');
+        button.textContent = original;
+      }
+      paint(strategy,'Failed','—');
+      alert(e.message || String(e));
+    }
+  };
+})();
 </script>
 """
 
@@ -221,21 +252,25 @@ def run_scan(strategy):
                     f"{label} exited with code {rc}. Check Terminal output."
                 )
 
+        finished = time.time()
         with LOCK:
             JOBS[strategy].update(
                 state="done",
                 step="complete",
-                finished_at=time.time(),
+                finished_at=finished,
+                duration_seconds=finished - JOBS[strategy]["started_at"],
             )
 
     except Exception as exc:
         print(f"[{strategy}] ERROR: {exc}", flush=True)
+        finished = time.time()
         with LOCK:
             JOBS[strategy].update(
                 state="failed",
                 error=str(exc),
                 step="failed",
-                finished_at=time.time(),
+                finished_at=finished,
+                duration_seconds=finished - JOBS[strategy]["started_at"],
             )
 
 
@@ -286,6 +321,9 @@ class Handler(BaseHTTPRequestHandler):
 
             with LOCK:
                 job = dict(JOBS.get(strategy, {"state": "idle"}))
+
+            if job.get("state") == "running" and job.get("started_at"):
+                job["elapsed_seconds"] = time.time() - job["started_at"]
 
             self.send_json(200, job)
             return
