@@ -514,6 +514,7 @@ def write_premium_plus(scan):
     payload = {
         "strategy": "FibEdge Premium+ V1",
         "updated_at": finished.isoformat(),
+        "scan_started_at_ist": scan["scan_time"],
         "scan_finished_at_ist": finished.isoformat(),
         "market_date": (
             scan["latest_market_date"].isoformat()
@@ -562,6 +563,7 @@ def write_strategy05(scan):
     payload = {
         "strategy": "FibEdge Confirmed Continuation",
         "updated_at": finished.isoformat(),
+        "scan_started_at_ist": scan["scan_time"],
         "scan_finished_at_ist": finished.isoformat(),
         "market_date": (
             scan["latest_market_date"].isoformat()
