@@ -164,7 +164,33 @@ h1{font-size:clamp(34px,5vw,58px);letter-spacing:-.05em;line-height:.98;margin:9
 .search{display:flex;gap:9px;padding:10px;margin:0 0 29px;border-radius:14px;background:#081522;border:1px solid #21374d}
 .search input{flex:1;min-width:0;padding:12px 13px;border-radius:10px;background:#050f19;color:#fff;border:1px solid #2a435b;font-size:13px}
 .search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.08)}
-.scancontrols{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:0 0 16px}.scanstatus{font-size:10px;color:#8fa5b9}.scanstatus b{color:var(--mode-accent2)}.scanbutton.busy{opacity:.6;cursor:wait}.scanbutton.done{box-shadow:0 0 0 2px rgba(var(--mode-rgb),.14) inset}\n.primary,.load{
+.scanpanel{
+  display:grid;grid-template-columns:minmax(190px,230px) 1fr;gap:12px;align-items:stretch;
+  margin:0 0 18px;padding:12px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(var(--mode-rgb),.09),#081522 62%);
+  border:1px solid rgba(var(--mode-rgb),.28);box-shadow:0 12px 32px rgba(0,0,0,.16)
+}
+.scanbutton{
+  min-height:58px;border:1px solid rgba(var(--mode-rgb),.62);border-radius:13px;
+  padding:0 18px;background:linear-gradient(135deg,rgba(var(--mode-rgb),.34),rgba(var(--mode-rgb),.12));
+  color:var(--mode-accent2);font-weight:950;font-size:12px;letter-spacing:.01em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:0 10px 26px rgba(var(--mode-rgb),.10),inset 0 1px 0 rgba(255,255,255,.04);
+  transition:.18s ease
+}
+.scanbutton:before{content:"↻";font-size:18px;line-height:1}
+.scanbutton:hover{transform:translateY(-1px);border-color:var(--mode-accent2);box-shadow:0 14px 30px rgba(var(--mode-rgb),.14)}
+.scanbutton.busy{opacity:.72;cursor:wait;transform:none}.scanbutton.busy:before{animation:scanSpin 1s linear infinite}
+.scanbutton.done{border-color:rgba(57,230,157,.72);box-shadow:0 0 0 2px rgba(57,230,157,.10) inset}
+.scanmeta{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.scanbox{min-width:0;padding:10px 12px;border-radius:12px;background:#06111c;border:1px solid #1d3348}
+.scanlabel{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.10em;color:#6f879d;font-weight:900}
+.scanvalue{display:block;margin-top:5px;font-size:13px;color:#dce9f4;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scanvalue.live{color:var(--mode-accent2)}
+.scannote{grid-column:1/-1;font-size:9px;color:#71879a;line-height:1.4;padding:1px 2px 0}
+@keyframes scanSpin{to{transform:rotate(360deg)}}
+@media(max-width:720px){.scanpanel{grid-template-columns:1fr}.scanmeta{grid-template-columns:1fr 1fr}}
+.primary,.load{
   border:1px solid rgba(var(--accent-rgb),.4);border-radius:10px;
   padding:11px 16px;background:linear-gradient(135deg,rgba(var(--accent-rgb),.35),rgba(var(--accent-rgb),.12));
   color:var(--accent2);font-weight:900;font-size:11px;cursor:pointer
@@ -283,9 +309,13 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
 
   <div id="classicArea">
     <div class="fresh"><span>Latest timestamp: <b id="latest">Loading…</b></span><span>Universe: <b id="universeLabel">All</b></span></div>
-    <div class="scancontrols">
-      <button class="primary scanbutton" type="button" onclick="requestScan('CLASSIC',this)">Scan Classic Now</button>
-      <div class="scanstatus">Direct manual scan · automatic full scan once at <b>4:05 PM IST</b></div>
+    <div class="scanpanel" data-scan-strategy="CLASSIC">
+      <button class="scanbutton" type="button" onclick="requestScan('CLASSIC',this)">Run Classic Scan</button>
+      <div class="scanmeta">
+        <div class="scanbox"><span class="scanlabel">Scan status</span><b class="scanvalue scan-state live">Ready</b></div>
+        <div class="scanbox"><span class="scanlabel">Scan time</span><b class="scanvalue scan-duration">—</b></div>
+        <div class="scannote">Manual on demand · automatic full scan once at 4:05 PM IST</div>
+      </div>
     </div>
 
     <div class="stats">
@@ -498,9 +528,13 @@ async function requestScan(strategy,button){
 }
 
 function scanControl(strategy,label,lastText){
-  return '<div class="scancontrols">'+
-    '<button class="primary scanbutton" type="button" onclick="requestScan(\''+strategy+'\',this)">Scan '+esc(label)+' Now</button>'+
-    '<div class="scanstatus">'+esc(lastText||'Direct manual scan')+' · Auto full scan: <b>4:05 PM IST, Mon–Fri</b></div>'+
+  return '<div class="scanpanel" data-scan-strategy="'+esc(strategy)+'">'+
+    '<button class="scanbutton" type="button" onclick="requestScan(\''+strategy+'\',this)">Run '+esc(label)+' Scan</button>'+
+    '<div class="scanmeta">'+
+      '<div class="scanbox"><span class="scanlabel">Scan status</span><b class="scanvalue scan-state live">Ready</b></div>'+
+      '<div class="scanbox"><span class="scanlabel">Scan time</span><b class="scanvalue scan-duration">—</b></div>'+
+      '<div class="scannote">'+esc(lastText||'Manual on demand')+' · Auto full scan: 4:05 PM IST, Mon–Fri</div>'+
+    '</div>'+
   '</div>';
 }
 
