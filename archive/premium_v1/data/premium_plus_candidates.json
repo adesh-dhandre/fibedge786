@@ -1,15 +1,20 @@
 {
   "strategy": "FibEdge Premium+ V1",
-  "updated_at": null,
-  "market_date": null,
+  "updated_at": "2026-09-22T02:59:53.090402+05:30",
+  "scan_started_at_ist": "2026-09-22T02:59:51.879253+05:30",
+  "scan_finished_at_ist": "2026-09-22T02:59:53.090402+05:30",
+  "market_date": "2026-09-21",
   "candidate_count": 0,
+  "cache_window": "1y",
   "frozen_rules": {
     "base_min_decline_pct": 8,
     "premium_min_decline_pct": 15,
     "min_swing_days": 15,
     "max_lower_wick_pct": 10,
     "max_compression_3v10": 0.9,
-    "min_close_above_786_pct": 2
+    "min_close_above_786_pct": 2.0,
+    "signal_timing": "after completed daily candle",
+    "entry_timing": "next session"
   },
   "candidates": []
 }
