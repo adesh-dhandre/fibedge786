@@ -1,13 +1,13 @@
 {
   "strategy": "FibEdge Confirmed Continuation",
-  "updated_at": null,
-  "market_date": null,
-  "candidate_count": 0,
+  "updated_at": "2026-09-21T17:12:40.796572+00:00",
+  "market_date": "2026-09-21",
+  "candidate_count": 1,
   "frozen_rule": {
     "fib_entry": 0.786,
-    "fib_stop": 0.500,
-    "primary_target": 1.260,
-    "extension_target": 1.500,
+    "fib_stop": 0.5,
+    "primary_target": 1.26,
+    "extension_target": 1.5,
     "min_close_above_786_pct": 4.0,
     "min_body_pct_range": 60.0,
     "signal_timing": "after completed daily candle",
@@ -21,9 +21,35 @@
     },
     "extension_1500": {
       "resolved_trades": 1023,
-      "win_rate_pct": 77.126100,
+      "win_rate_pct": 77.1261,
       "unique_stocks": 691
     }
   },
-  "candidates": []
+  "candidates": [
+    {
+      "symbol": "SHADOWFAX.NS",
+      "signal_date": "2026-09-21",
+      "close": 272.75,
+      "open": 251.5,
+      "high": 274.79998779296875,
+      "low": 248.39999389648438,
+      "fib_0786": 261.6628952026367,
+      "sl": 252.3249969482422,
+      "target_126": 277.1389923095703,
+      "target_150": 284.97499084472656,
+      "close_vs_786_pct": 4.237171185000155,
+      "body_pct_range": 80.49244285177586,
+      "candle_direction": "BULLISH",
+      "decline_pct": 12.15335739373402,
+      "swing_days": 27,
+      "recovery_days": 5,
+      "rsi14": 60.912272135416664,
+      "high_date": "2026-08-20",
+      "swing_high": 268.6499938964844,
+      "low_date": "2026-09-16",
+      "swing_low": 236.0,
+      "signal_timing": "after completed daily candle",
+      "entry_timing": "next session"
+    }
+  ]
 }
