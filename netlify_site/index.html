@@ -510,7 +510,8 @@ function renderStrategy05View(){
   const xs=set?rows.filter(r=>set.has(sym(r.symbol))):rows;
   const hist126=DATA.strategy05?.historical_research?.primary_1260||{};
   const hist150=DATA.strategy05?.historical_research?.extension_1500||{};
-  const marketDate=DATA.strategy05?.market_date||'Waiting';\n  const lastScan=DATA.strategy05?.scan_finished_at_ist||DATA.strategy05?.updated_at||null;
+  const marketDate=DATA.strategy05?.market_date||'Waiting';
+  const lastScan=DATA.strategy05?.scan_finished_at_ist||DATA.strategy05?.updated_at||null;
 
   const card=xs.length?'<div class="previewgrid">'+xs.map((r,i)=>
     '<div class="pcard" style="animation-delay:'+(i*35)+'ms">'+
