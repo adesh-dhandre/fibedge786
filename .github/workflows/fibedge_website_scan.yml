@@ -17,7 +17,8 @@ on:
           - STRATEGY05
 
   schedule:
-    # ONE automatic scan after NSE close: 16:05 IST (10:35 UTC), Mon-Fri.
+    # ONE automatic full website scan after NSE close:
+    # 16:05 IST = 10:35 UTC, Monday-Friday.
     - cron: "35 10 * * 1-5"
 
 permissions:
@@ -30,7 +31,14 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 15
+
+    env:
+      # If these two secrets exist, every strategy shares the persistent
+      # Upstash Redis cache. If absent, the scanner falls back to SQLite.
+      UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+      UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+      FIBEDGE_YF_BATCH_SIZE: "125"
 
     steps:
       - name: Checkout repository
@@ -58,28 +66,17 @@ jobs:
             echo "strategy=${{ inputs.strategy }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Refresh Classic / Clean / Premium source data
-        if: steps.choose.outputs.strategy == 'ALL' || steps.choose.outputs.strategy == 'CLASSIC' || steps.choose.outputs.strategy == 'CLEAN' || steps.choose.outputs.strategy == 'PREMIUM'
+      - name: Run shared cached fast scan
         run: |
-          python fib_price_refresh_v2.py
-          python fibedge_quality_live_merge.py
-          python fibedge_opportunity_rank_v3.py
-
-      - name: Scan Premium+ V1
-        if: steps.choose.outputs.strategy == 'ALL' || steps.choose.outputs.strategy == 'PREMIUMPLUS'
-        run: |
-          python archive/premium_v1/premium_plus_scanner.py
-
-      - name: Scan Strategy 05
-        if: steps.choose.outputs.strategy == 'ALL' || steps.choose.outputs.strategy == 'STRATEGY05'
-        run: |
-          python strategy_05_live/strategy_05_scanner.py
+          python fibedge_fast_scan.py "${{ steps.choose.outputs.strategy }}"
 
       - name: Publish scan results
         run: |
           git config user.name "FibEdge Bot"
           git config user.email "fibedge-bot@users.noreply.github.com"
 
+          git add -f ALL_NSE_CURRENT_SETUPS_V3.csv || true
+          git add -f ALL_NSE_FAILED_SYMBOLS_V3.csv || true
           git add -f FIBEDGE_LATEST_SIGNALS.csv || true
           git add -f FIBEDGE_TOP_CURRENT_SETUPS.csv || true
           git add -f FIBEDGE_BEST_OPPORTUNITIES_V3.csv || true
@@ -91,7 +88,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No scan-data changes."
           else
-            git commit -m "Website scan: ${{ steps.choose.outputs.strategy }}"
+            git commit -m "Website cached scan: ${{ steps.choose.outputs.strategy }}"
             git pull --rebase
             git push
           fi
