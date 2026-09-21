@@ -164,7 +164,7 @@ h1{font-size:clamp(34px,5vw,58px);letter-spacing:-.05em;line-height:.98;margin:9
 .search{display:flex;gap:9px;padding:10px;margin:0 0 29px;border-radius:14px;background:#081522;border:1px solid #21374d}
 .search input{flex:1;min-width:0;padding:12px 13px;border-radius:10px;background:#050f19;color:#fff;border:1px solid #2a435b;font-size:13px}
 .search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.08)}
-.scancontrols{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:0 0 16px}.scanstatus{font-size:10px;color:#8fa5b9}.scanstatus b{color:var(--mode-accent2)}\n.primary,.load{
+.scancontrols{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:0 0 16px}.scanstatus{font-size:10px;color:#8fa5b9}.scanstatus b{color:var(--mode-accent2)}.scanbutton.busy{opacity:.6;cursor:wait}.scanbutton.done{box-shadow:0 0 0 2px rgba(var(--mode-rgb),.14) inset}\n.primary,.load{
   border:1px solid rgba(var(--accent-rgb),.4);border-radius:10px;
   padding:11px 16px;background:linear-gradient(135deg,rgba(var(--accent-rgb),.35),rgba(var(--accent-rgb),.12));
   color:var(--accent2);font-weight:900;font-size:11px;cursor:pointer
@@ -283,6 +283,10 @@ tbody tr:hover td{background:rgba(var(--accent-rgb),.045)}
 
   <div id="classicArea">
     <div class="fresh"><span>Latest timestamp: <b id="latest">Loading…</b></span><span>Universe: <b id="universeLabel">All</b></span></div>
+    <div class="scancontrols">
+      <button class="primary scanbutton" type="button" onclick="requestScan('CLASSIC',this)">Scan Classic Now</button>
+      <div class="scanstatus">Direct manual scan · automatic full scan once at <b>4:05 PM IST</b></div>
+    </div>
 
     <div class="stats">
       <div class="stat"><div class="lab">Stocks Scanned</div><div class="num" id="total">—</div><small>Current universe</small></div>
@@ -412,7 +416,8 @@ function renderPremiumPlusView(){
   const set=currentFilterSet();
   const xs=set?rows.filter(r=>set.has(sym(r.symbol))):rows;
   const card=xs.length?'<div class="previewgrid">'+xs.map((r,i)=>'<div class="pcard" style="animation-delay:'+(i*35)+'ms"><div class="pcardhead"><div class="pcardsym">'+esc(sym(r.symbol))+'</div><div class="pcardbadge">CONFIRMED</div></div><div class="pprice">₹'+esc(num(r.close))+'</div><div class="pmetrics"><div class="pmetric"><span>Entry 0.786</span><b>'+esc(num(r.fib_0786))+'</b></div><div class="pmetric"><span>Stop</span><b>'+esc(num(r.sl))+'</b></div><div class="pmetric"><span>Target</span><b>'+esc(num(r.target))+'</b></div><div class="pmetric"><span>Decline</span><b>'+esc(num(r.decline_pct))+'%</b></div><div class="pmetric"><span>Swing</span><b>'+esc(r.swing_days||'-')+'d</b></div><div class="pmetric"><span>Lower Wick</span><b>'+esc(num(r.lower_wick_pct))+'%</b></div><div class="pmetric"><span>Compression</span><b>'+esc(num(r.compression_3v10))+'</b></div><div class="pmetric"><span>Close above 0.786</span><b>'+esc(pct(r.close_vs_786_pct,true))+'</b></div></div></div>').join('')+'</div>':'<div class="empty"><b>No Premium+ setup today.</b><br><br>Waiting for frozen V1 confirmation after a completed daily candle.</div>';
-  document.getElementById('modeContent').innerHTML='<div class="previewtop"><div><h2>Premium+ V1</h2><p>Behavior-confirmed setup. 234 wins from 304 resolved historical trades.</p></div><span class="pill">76.97% HISTORICAL WIN RATE</span></div><div class="previewalert">Historical result, not guaranteed future accuracy. Signal only after a completed daily candle; candidate entry is next session.</div>'+previewSection('Premium+ Confirmed','Only fully confirmed Premium+ V1 candidates.',xs.length,card,'section-best');
+  const ppLast=DATA.premiumPlus?.scan_finished_at_ist||DATA.premiumPlus?.updated_at||null;
+  document.getElementById('modeContent').innerHTML='<div class="previewtop"><div><h2>Premium+ V1</h2><p>Behavior-confirmed setup. 234 wins from 304 resolved historical trades.</p></div><span class="pill">76.97% HISTORICAL WIN RATE</span></div>'+scanControl('PREMIUMPLUS','Premium+','Last scan: '+fmtScanIST(ppLast))+'<div class="previewalert">Historical result, not guaranteed future accuracy. Signal only after a completed daily candle; candidate entry is next session.</div>'+previewSection('Premium+ Confirmed','Only fully confirmed Premium+ V1 candidates.',xs.length,card,'section-best');
 }
 
 function fmtScanIST(v){
@@ -425,12 +430,78 @@ function fmtScanIST(v){
     hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true
   })+' IST';
 }
-function openStrategy05ManualScan(){
-  window.open(
-    'https://github.com/adesh-dhandre/fibedge786/actions/workflows/strategy_05_refresh.yml',
-    '_blank',
-    'noopener,noreferrer'
-  );
+async function scanAuth(){
+  const password=window.prompt('Enter FibEdge scan password');
+  if(password===null||password==='')return false;
+  const r=await fetch('/.netlify/functions/scan-auth',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({password})
+  });
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok){
+    window.alert(data.error||'Scan authorization failed.');
+    return false;
+  }
+  return true;
+}
+
+async function requestScan(strategy,button){
+  const original=button?button.textContent:'Scan Now';
+  if(button){
+    button.disabled=true;
+    button.classList.add('busy');
+    button.textContent='Starting Scan…';
+  }
+
+  async function trigger(){
+    return fetch('/.netlify/functions/scan',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({strategy})
+    });
+  }
+
+  try{
+    let r=await trigger();
+    if(r.status===401){
+      const ok=await scanAuth();
+      if(!ok)return;
+      r=await trigger();
+    }
+
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||'Could not start scan.');
+
+    if(button){
+      button.classList.remove('busy');
+      button.classList.add('done');
+      button.textContent='Scan Started ✓';
+    }
+
+    window.alert(
+      'Scan started for '+strategy+'. The page will keep showing the previous data until the GitHub scan finishes, then the feed will update.'
+    );
+
+    setTimeout(()=>loadAll(true),30000);
+  }catch(e){
+    window.alert(e.message||String(e));
+  }finally{
+    if(button){
+      setTimeout(()=>{
+        button.disabled=false;
+        button.classList.remove('busy','done');
+        button.textContent=original;
+      },5000);
+    }
+  }
+}
+
+function scanControl(strategy,label,lastText){
+  return '<div class="scancontrols">'+
+    '<button class="primary scanbutton" type="button" onclick="requestScan(\''+strategy+'\',this)">Scan '+esc(label)+' Now</button>'+
+    '<div class="scanstatus">'+esc(lastText||'Direct manual scan')+' · Auto full scan: <b>4:05 PM IST, Mon–Fri</b></div>'+
+  '</div>';
 }
 
 function renderStrategy05View(){
@@ -470,8 +541,8 @@ function renderStrategy05View(){
 
   document.getElementById('modeContent').innerHTML=
     '<div class="previewtop"><div><h2>Confirmed Continuation</h2><p>Strong continuation after Fib 0.786. A setup is confirmed only after the daily candle closes at least 4% above 0.786 with a body at least 60% of the candle range.</p></div><span class="pill">STRATEGY 05 · LOCAL/RESEARCH</span></div>'+
-    '<div class="scancontrols"><button class="primary" type="button" onclick="openStrategy05ManualScan()">Manual Scan</button><div class="scanstatus">Last EOD scan: <b>'+esc(fmtScanIST(lastScan))+'</b> · Auto scan: <b>4:05 PM IST, Mon–Fri</b></div></div>'+
-    '<div class="previewalert"><b>Scan policy:</b> Strategy 05 does not need 15-minute scanning. It scans once after the market closes. Manual scans before 3:40 PM IST ignore the current partial daily candle and use only the last completed daily candle.</div>'+
+    scanControl('STRATEGY05','Strategy 05','Last EOD scan: '+fmtScanIST(lastScan))+
+    '<div class="previewalert"><b>Scan policy:</b> Automatic intraday scanning is retired. The full site scans once after the market closes. Manual scans before 3:40 PM IST ignore the current partial daily candle and use only the last completed daily candle.</div>'+
     stats+
     previewSection('Confirmed Continuation Signals','Same confirmation supports the 1.260 primary target and the 1.500 extension target.',xs.length,card,'section-best');
 }
@@ -517,6 +588,7 @@ function renderModeView(){
 
   const html=
     '<div class="previewtop"><div><h2>'+modeTitle+'</h2><p>'+modeText+'</p></div><span class="pill">'+pill+'</span></div>'+
+    scanControl(mode,modeTitle,'Latest source data: '+latestLabel(DATA.signals))+
     '<div class="previewalert">'+note+'</div>'+mappingWarn+
     '<div class="previewstats">'+
       '<div class="pstat"><div class="lab">Candidates</div><b>'+rows.length+'</b></div>'+
