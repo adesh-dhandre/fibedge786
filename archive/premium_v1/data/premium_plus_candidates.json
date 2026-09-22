@@ -1,9 +1,9 @@
 {
   "strategy": "FibEdge Premium+ V1",
-  "updated_at": "2026-09-22T02:59:53.090402+05:30",
-  "scan_started_at_ist": "2026-09-22T02:59:51.879253+05:30",
-  "scan_finished_at_ist": "2026-09-22T02:59:53.090402+05:30",
-  "market_date": "2026-09-21",
+  "updated_at": "2026-09-22T16:08:28.355427+05:30",
+  "scan_started_at_ist": "2026-09-22T16:08:27.803543+05:30",
+  "scan_finished_at_ist": "2026-09-22T16:08:28.355427+05:30",
+  "market_date": "2026-09-22",
   "candidate_count": 0,
   "cache_window": "1y",
   "frozen_rules": {
