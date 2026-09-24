@@ -27,14 +27,18 @@ exports.handler = async (event) => {
     return reply(400, JSON.stringify({ ok: false, error: "Unknown data file" }));
   }
 
-  const url = `https://raw.githubusercontent.com/adesh-dhandre/fibedge786/master/${path}`;
+  const url = `https://raw.githubusercontent.com/adesh-dhandre/fibedge786/master/${path}?v=${Date.now()}`;
 
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 12000);
     const response = await fetch(url, {
       signal: controller.signal,
-      headers: { "User-Agent": "FibEdge-Netlify-Data" }
+      headers: {
+        "User-Agent": "FibEdge-Netlify-Data",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
+      }
     });
     clearTimeout(timer);
 
