@@ -1,5 +1,6 @@
 [build]
   publish = "netlify_site"
+  command = "node netlify/build-rewrite.js"
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF netlify_site/ netlify/ netlify.toml"
 
 [build.environment]
