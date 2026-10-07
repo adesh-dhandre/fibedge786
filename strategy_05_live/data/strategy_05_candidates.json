@@ -1,10 +1,10 @@
 {
   "strategy": "FibEdge Confirmed Continuation",
-  "updated_at": "2026-09-29T02:43:37.960875+05:30",
-  "scan_started_at_ist": "2026-09-29T02:43:35.708832+05:30",
-  "scan_finished_at_ist": "2026-09-29T02:43:37.960875+05:30",
-  "market_date": "2026-09-28",
-  "candidate_count": 2,
+  "updated_at": "2026-10-08T01:52:37.688485+05:30",
+  "scan_started_at_ist": "2026-10-08T01:52:35.545534+05:30",
+  "scan_finished_at_ist": "2026-10-08T01:52:37.688485+05:30",
+  "market_date": "2026-10-07",
+  "candidate_count": 0,
   "cache_window": "1y",
   "scan_policy": {
     "automatic": "once after market close",
@@ -34,56 +34,5 @@
       "unique_stocks": 691
     }
   },
-  "candidates": [
-    {
-      "symbol": "UGARSUGAR.NS",
-      "signal_date": "2026-09-25",
-      "close": 64.02999877929688,
-      "open": 55.97999954223633,
-      "high": 66.66000366210938,
-      "low": 54.709999084472656,
-      "fib_0786": 59.18745915985107,
-      "sl": 55.295000076293945,
-      "target_126": 65.63859764099121,
-      "target_150": 68.90499687194824,
-      "close_vs_786_pct": 8.181698772314693,
-      "body_pct_range": 67.36398454713016,
-      "candle_direction": "BULLISH",
-      "decline_pct": 21.91625946871156,
-      "swing_days": 18,
-      "recovery_days": 14,
-      "rsi14": 68.69300691587709,
-      "high_date": "2026-08-24",
-      "swing_high": 62.099998474121094,
-      "low_date": "2026-09-11",
-      "swing_low": 48.4900016784668,
-      "signal_timing": "after completed daily candle",
-      "entry_timing": "next session"
-    },
-    {
-      "symbol": "AETHER.NS",
-      "signal_date": "2026-09-25",
-      "close": 1767.0,
-      "open": 1653.0,
-      "high": 1798.0,
-      "low": 1640.4000244140625,
-      "fib_0786": 1681.8397895507812,
-      "sl": 1634.8499755859375,
-      "target_126": 1759.7180126953126,
-      "target_150": 1799.1500244140625,
-      "close_vs_786_pct": 5.063515025528376,
-      "body_pct_range": 72.33503658624431,
-      "candle_direction": "BULLISH",
-      "decline_pct": 9.569018568906523,
-      "swing_days": 19,
-      "recovery_days": 9,
-      "rsi14": 68.49761952145492,
-      "high_date": "2026-08-28",
-      "swing_high": 1717.0,
-      "low_date": "2026-09-16",
-      "swing_low": 1552.699951171875,
-      "signal_timing": "after completed daily candle",
-      "entry_timing": "next session"
-    }
-  ]
+  "candidates": []
 }
